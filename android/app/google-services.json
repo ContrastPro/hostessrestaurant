@@ -1,0 +1,91 @@
+{
+  "project_info": {
+    "project_number": "402440327451",
+    "firebase_url": "https://hostess-original.firebaseio.com",
+    "project_id": "hostess-original",
+    "storage_bucket": "hostess-original.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:402440327451:android:a46bf2a010d02958f1c3be",
+        "android_client_info": {
+          "package_name": "com.original.hostess"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "402440327451-mslvlb773hej96lpmle8po2l9d1s1tmd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.original.hostess",
+            "certificate_hash": "62f81226d3e0f2a5f0d06b560814937169ddc09a"
+          }
+        },
+        {
+          "client_id": "402440327451-ss60fr6d0651ab9jlvq3kvn6fqima13f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRA1nUv8241F5kkmYZIK5Hip2D-kS6fvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "402440327451-ss60fr6d0651ab9jlvq3kvn6fqima13f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "402440327451-6jktfv8qjmvif25n0bp1f27pt88ops02.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.original.hostess"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:402440327451:android:baeacfc6f96756f1f1c3be",
+        "android_client_info": {
+          "package_name": "com.original.hostessrestaurant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "402440327451-ss60fr6d0651ab9jlvq3kvn6fqima13f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRA1nUv8241F5kkmYZIK5Hip2D-kS6fvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "402440327451-ss60fr6d0651ab9jlvq3kvn6fqima13f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "402440327451-6jktfv8qjmvif25n0bp1f27pt88ops02.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.original.hostess"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
