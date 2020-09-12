@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hostessrestaurant/model/categories.dart';
+import 'package:hostessrestaurant/models/categories.dart';
 import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 
 getCategories(CategoriesNotifier categoriesNotifier, String restaurant,

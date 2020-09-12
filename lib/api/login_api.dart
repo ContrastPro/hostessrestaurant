@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hostessrestaurant/model/user.dart';
+import 'package:hostessrestaurant/models/user.dart';
 import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 
 login(User user, AuthNotifier authNotifier) async {

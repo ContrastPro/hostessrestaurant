@@ -1,12 +1,16 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hostessrestaurant/api/categories_api.dart';
 import 'package:hostessrestaurant/api/food_api.dart';
+import 'package:hostessrestaurant/api/login_api.dart';
+import 'package:hostessrestaurant/api/profile_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
-import 'package:hostessrestaurant/model/categories.dart';
+import 'package:hostessrestaurant/models/categories.dart';
+import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 import 'package:hostessrestaurant/notifier/food_notifier.dart';
+import 'package:hostessrestaurant/notifier/profile_notifier.dart';
 import 'package:hostessrestaurant/screens/food_form_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -25,9 +29,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+    ProfileNotifier profileNotifier =
+        Provider.of<ProfileNotifier>(context, listen: false);
+    getProfile(profileNotifier, _restaurant, _address);
 
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context, listen: false);
@@ -106,6 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AuthNotifier authNotifier = Provider.of<AuthNotifier>(context);
+    ProfileNotifier profileNotifier = Provider.of<ProfileNotifier>(context);
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context);
     FoodNotifier foodNotifier = Provider.of<FoodNotifier>(context);
@@ -336,16 +342,109 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    Widget _drawerHeader() {
+      return Container(
+        width: double.infinity,
+        height: 150,
+        color: c_primary,
+        padding: EdgeInsets.fromLTRB(16.0, 20.0, 0.0, 20.0),
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: RawMaterialButton(
+                onPressed: () {},
+                fillColor: c_secondary.withOpacity(0.5),
+                child: Icon(
+                  Icons.edit,
+                  color: Colors.white,
+                ),
+                padding: EdgeInsets.all(10.0),
+                shape: CircleBorder(),
+              ),
+            ),
+            profileNotifier.profileList.isNotEmpty
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        profileNotifier.profileList[0].title,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        profileNotifier.profileList[0].address,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  )
+                : SizedBox(),
+          ],
+        ),
+      );
+    }
+
+    Widget _drawerAddresses(DocumentSnapshot document) {
+      return ListTile(
+        onTap: () {},
+        title: Text(document.data['address']),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: c_primary,
-        title: const Text('Меню'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {},
-          )
+        title: Text(authNotifier.user.displayName),
+        centerTitle: true,
+        actions: <Widget>[
+          // action button
+          FlatButton(
+            onPressed: () => signout(authNotifier),
+            child: Text(
+              "выйти",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ),
         ],
+      ),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            _drawerHeader(),
+            StreamBuilder(
+              stream: Firestore.instance.collection(_restaurant).snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Something went wrong'));
+                }
+
+                if (!snapshot.hasData) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 0.0),
+                    child: CircularProgressIndicator(strokeWidth: 10),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: snapshot.data.documents.length,
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return _drawerAddresses(snapshot.data.documents[index]);
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: CustomScrollView(
         slivers: <Widget>[

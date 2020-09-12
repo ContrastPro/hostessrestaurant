@@ -1,7 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/cupertino.dart';
-import 'package:hostessrestaurant/model/food.dart';
+import 'package:hostessrestaurant/models/food.dart';
 
 class FoodNotifier with ChangeNotifier {
   List<Food> _foodList = [];
