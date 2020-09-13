@@ -407,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: <Widget>[
           // action button
           FlatButton(
-            onPressed: () => signout(authNotifier),
+            onPressed: () => signOut(authNotifier),
             child: Text(
               "выйти",
               style: TextStyle(fontSize: 16, color: Colors.white),

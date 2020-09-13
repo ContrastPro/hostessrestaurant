@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hostessrestaurant/api/food_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
 import 'package:hostessrestaurant/models/food.dart';
@@ -39,9 +40,9 @@ class _FoodFormState extends State<FoodForm> {
   File _imageFileHigh, _imageFileLow;
   List _subIngredients = [];
   List _subPrice = [];
-  TextEditingController subIngredientController = TextEditingController();
-  TextEditingController subPriceController = TextEditingController();
-  bool isUploading = false;
+  TextEditingController _subIngredientController = TextEditingController();
+  TextEditingController _subPriceController = TextEditingController();
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -292,7 +293,7 @@ class _FoodFormState extends State<FoodForm> {
       child: Padding(
         padding: const EdgeInsets.only(right: 20),
         child: TextField(
-          controller: subIngredientController,
+          controller: _subIngredientController,
           keyboardType: TextInputType.text,
           maxLength: 30,
           decoration: InputDecoration(
@@ -310,7 +311,7 @@ class _FoodFormState extends State<FoodForm> {
       child: Padding(
         padding: const EdgeInsets.only(right: 20),
         child: TextField(
-          controller: subPriceController,
+          controller: _subPriceController,
           keyboardType: TextInputType.text,
           maxLength: 30,
           decoration: InputDecoration(
@@ -379,7 +380,7 @@ class _FoodFormState extends State<FoodForm> {
       setState(() {
         _subIngredients.add(text);
       });
-      subIngredientController.clear();
+      _subIngredientController.clear();
     }
   }
 
@@ -388,7 +389,7 @@ class _FoodFormState extends State<FoodForm> {
       setState(() {
         _subPrice.add(text);
       });
-      subPriceController.clear();
+      _subPriceController.clear();
     }
   }
 
@@ -424,196 +425,198 @@ class _FoodFormState extends State<FoodForm> {
 
   @override
   Widget build(BuildContext context) {
-    return isUploading == false
-        ? Scaffold(
-            body: Stack(
-              children: <Widget>[
-                _showImageHigh(),
-                Container(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.80,
-                  alignment: Alignment.topCenter,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: <Color>[
-                        Colors.black.withAlpha(0),
-                        Colors.black12,
-                        Colors.black87,
-                      ],
+    return Scaffold(
+      body: Stack(
+        children: <Widget>[
+          _showImageHigh(),
+          Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.80,
+            alignment: Alignment.topCenter,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  Colors.black.withAlpha(0),
+                  Colors.black12,
+                  Colors.black87,
+                ],
+              ),
+            ),
+          ),
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: DraggableScrollableSheet(
+                initialChildSize: 0.55,
+                maxChildSize: 0.80,
+                minChildSize: 0.25,
+                builder: (context, scrollController) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: c_background,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30.0),
+                        topRight: Radius.circular(30.0),
+                      ),
                     ),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 30.0, vertical: 35.0),
+                      child: Form(
+                        autovalidate: true,
+                        child: Column(children: <Widget>[
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              isUpdating != true
+                                  ? "Добавить блюдо"
+                                  : "Редактировать блюдо",
+                              style: TextStyle(
+                                color: t_primary,
+                                fontSize: 25.0,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          _showImageLow(),
+                          SizedBox(height: 10),
+                          _buildNameField(),
+                          _buildCategoryField(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: <Widget>[
+                              _buildPriceField(),
+                              FloatingActionButton(
+                                heroTag: 'price',
+                                backgroundColor: c_primary,
+                                elevation: 0,
+                                highlightElevation: 0,
+                                mini: true,
+                                onPressed: () =>
+                                    _addSubPrice(_subPriceController.text),
+                                child: Icon(Icons.add),
+                                foregroundColor: Colors.white,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(children: _buildListPrice()),
+                          ),
+                          SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: <Widget>[
+                              _buildIngredientField(),
+                              FloatingActionButton(
+                                heroTag: 'ingredients',
+                                backgroundColor: c_primary,
+                                elevation: 0,
+                                highlightElevation: 0,
+                                mini: true,
+                                onPressed: () => _addSubIngredient(
+                                    _subIngredientController.text),
+                                child: Icon(Icons.add),
+                                foregroundColor: Colors.white,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(children: _buildListIngredients()),
+                          ),
+                          SizedBox(height: 100),
+                        ]),
+                      ),
+                    ),
+                  );
+                }),
+          ),
+          SafeArea(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.0),
+                  child: RawMaterialButton(
+                    onPressed: () => Navigator.pop(context),
+                    fillColor: c_secondary.withOpacity(0.5),
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                    ),
+                    padding: EdgeInsets.all(13.0),
+                    shape: CircleBorder(),
                   ),
                 ),
-                Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: DraggableScrollableSheet(
-                      initialChildSize: 0.55,
-                      maxChildSize: 0.80,
-                      minChildSize: 0.25,
-                      builder: (context, scrollController) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: c_background,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(30.0),
-                              topRight: Radius.circular(30.0),
-                            ),
-                          ),
-                          child: SingleChildScrollView(
-                            controller: scrollController,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 30.0, vertical: 35.0),
-                            child: Form(
-                              autovalidate: true,
-                              child: Column(children: <Widget>[
-                                Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Text(
-                                    isUpdating != true
-                                        ? "Добавить блюдо"
-                                        : "Редактировать блюдо",
-                                    style: TextStyle(
-                                      color: t_primary,
-                                      fontSize: 25.0,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 30),
-                                _showImageLow(),
-                                SizedBox(height: 10),
-                                _buildNameField(),
-                                _buildCategoryField(),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    _buildPriceField(),
-                                    FloatingActionButton(
-                                      heroTag: 'price',
-                                      backgroundColor: c_primary,
-                                      elevation: 0,
-                                      highlightElevation: 0,
-                                      mini: true,
-                                      onPressed: () =>
-                                          _addSubPrice(subPriceController.text),
-                                      child: Icon(Icons.add),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 20),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Wrap(children: _buildListPrice()),
-                                ),
-                                SizedBox(height: 20),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    _buildIngredientField(),
-                                    FloatingActionButton(
-                                      heroTag: 'ingredients',
-                                      backgroundColor: c_primary,
-                                      elevation: 0,
-                                      highlightElevation: 0,
-                                      mini: true,
-                                      onPressed: () => _addSubIngredient(
-                                          subIngredientController.text),
-                                      child: Icon(Icons.add),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 20),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child:
-                                      Wrap(children: _buildListIngredients()),
-                                ),
-                                SizedBox(height: 100),
-                              ]),
-                            ),
-                          ),
-                        );
-                      }),
-                ),
-                SafeArea(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
+                isUpdating == true
+                    ? Padding(
                         padding: EdgeInsets.symmetric(vertical: 20.0),
                         child: RawMaterialButton(
-                          onPressed: () => Navigator.pop(context),
-                          fillColor: c_secondary.withOpacity(0.5),
+                          onPressed: () => _showDeleteDialog(),
+                          fillColor: Colors.red[900],
                           child: Icon(
-                            Icons.arrow_back,
+                            Icons.delete_forever,
                             color: Colors.white,
                           ),
                           padding: EdgeInsets.all(13.0),
                           shape: CircleBorder(),
                         ),
-                      ),
-                      isUpdating == true
-                          ? Padding(
-                              padding: EdgeInsets.symmetric(vertical: 20.0),
-                              child: RawMaterialButton(
-                                onPressed: () => _showDeleteDialog(),
-                                fillColor: Colors.red[900],
-                                child: Icon(
-                                  Icons.delete_forever,
-                                  color: Colors.white,
-                                ),
-                                padding: EdgeInsets.all(13.0),
-                                shape: CircleBorder(),
-                              ),
-                            )
-                          : Container(),
-                    ],
-                  ),
-                ),
+                      )
+                    : Container(),
               ],
             ),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
-            floatingActionButton: FloatingActionButton.extended(
-              backgroundColor: c_secondary,
-              onPressed: () {
-                isUpdating != true ? _addFood() : _editFood();
-                setState(() => isUploading = !isUploading);
-              },
-              icon: Icon(isUpdating != true ? Icons.create : Icons.save),
-              label: Text(
-                isUpdating != true ? "ОПУБЛИКОВАТЬ" : 'СОХРАНИТЬ',
-                style: TextStyle(color: Colors.white),
-              ),
-              foregroundColor: Colors.white,
-            ),
-          )
-        : Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  CircularProgressIndicator(strokeWidth: 10),
-                  SizedBox(height: 50),
-                  Text(
-                    isUpdating != true ? "Добавляем блюдо" : 'Вносим изменения',
-                    style: TextStyle(
-                      color: t_primary,
-                      fontSize: 22.0,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
+          ),
+          _isUploading == true
+              ? Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black54,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SpinKitWave(
+                        color: Colors.white,
+                        size: 50.0,
+                      ),
+                      Text(
+                        isUpdating != true
+                            ? "Добавляем блюдо"
+                            : 'Вносим изменения',
+                        style: TextStyle(
+                            fontSize: 22,
+                            color: Colors.white,
+                            fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                )
+              : SizedBox(),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: c_secondary,
+        onPressed: () {
+          isUpdating != true ? _addFood() : _editFood();
+          setState(() => _isUploading = !_isUploading);
+        },
+        icon: Icon(isUpdating != true ? Icons.create : Icons.save),
+        label: Text(
+          isUpdating != true ? "ОПУБЛИКОВАТЬ" : 'СОХРАНИТЬ',
+          style: TextStyle(color: Colors.white),
+        ),
+        foregroundColor: Colors.white,
+      ),
+    );
   }
 
   _buildListIngredients() {
@@ -643,7 +646,7 @@ class _FoodFormState extends State<FoodForm> {
               setState(() {
                 _subIngredients.remove(ingredient);
               });
-              subIngredientController.clear();
+              _subIngredientController.clear();
             },
           ),
         ),
@@ -679,7 +682,7 @@ class _FoodFormState extends State<FoodForm> {
               setState(() {
                 _subPrice.remove(price);
               });
-              subPriceController.clear();
+              _subPriceController.clear();
             },
           ),
         ),
