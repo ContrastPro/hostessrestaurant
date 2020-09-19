@@ -3,15 +3,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hostessrestaurant/api/categories_api.dart';
 import 'package:hostessrestaurant/api/food_api.dart';
-import 'package:hostessrestaurant/api/login_api.dart';
 import 'package:hostessrestaurant/api/profile_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
 import 'package:hostessrestaurant/models/categories.dart';
+import 'package:hostessrestaurant/models/profile.dart';
 import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 import 'package:hostessrestaurant/notifier/food_notifier.dart';
 import 'package:hostessrestaurant/notifier/profile_notifier.dart';
 import 'package:hostessrestaurant/screens/food_form_screen.dart';
+import 'package:hostessrestaurant/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,8 +21,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _restaurant = 'Jardin';
-  String _address = 'Одесса, ул. Гаванная 10';
+  String _uid;
+  String _addressId;
   String _category;
   int _selectedIndex = 0;
   Categories _categories;
@@ -29,13 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    AuthNotifier authNotifier =
+        Provider.of<AuthNotifier>(context, listen: false);
+    setState(() => _uid = authNotifier.user.uid);
+
     ProfileNotifier profileNotifier =
         Provider.of<ProfileNotifier>(context, listen: false);
-    getProfile(profileNotifier, _restaurant, _address);
+    getProfile(profileNotifier, _uid, _addressId);
 
-    CategoriesNotifier categoriesNotifier =
-        Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _restaurant, _address);
     _categories = Categories();
     super.initState();
   }
@@ -50,13 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _saveCategory(String categoryText) {
     addCategory(
-        _categories, _onCategoryUploaded, _restaurant, _address, categoryText);
+        _categories, _onCategoryUploaded, _uid, _addressId, categoryText);
   }
 
   _onCategoryUploaded(Categories categories) {
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _restaurant, _address);
+    getCategories(categoriesNotifier, _uid, _addressId);
     Navigator.pop(context);
   }
 
@@ -77,14 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
       content: TextField(
         controller: _categoryController,
         maxLength: 50,
-        minLines: 1,
-        maxLines: 3,
+        maxLines: 1,
         keyboardType: TextInputType.text,
         style: TextStyle(fontSize: 20, color: t_primary),
-        decoration: InputDecoration(
-          labelText: 'Название',
-          prefixIcon: Icon(Icons.title),
-        ),
+        decoration: InputDecoration(labelText: 'Название'),
       ),
       actions: [cancelButton, okButton],
     );
@@ -97,14 +95,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _deleteCategory(int index) {
-    deleteCategory(
-        _categories, _onCategoryDelete, _restaurant, _address, _category);
+    deleteCategory(_categories, _onCategoryDelete, _uid, _addressId, _category);
   }
 
   _onCategoryDelete(Categories categories) {
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _restaurant, _address);
+    getCategories(categoriesNotifier, _uid, _addressId);
     Navigator.pop(context);
   }
 
@@ -117,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
     FoodNotifier foodNotifier = Provider.of<FoodNotifier>(context);
 
     Future<void> _refreshList(String category) async {
-      getFoods(foodNotifier, _restaurant, _address, category);
+      getFoods(foodNotifier, _uid, _addressId, category);
     }
 
     _showCreateDialog() {
@@ -140,8 +137,8 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => FoodForm(
                 isUpdating: false,
-                restaurant: _restaurant,
-                address: _address,
+                restaurant: _uid,
+                address: _addressId,
                 category: _category,
               ),
             ),
@@ -151,7 +148,12 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       AlertDialog alert = AlertDialog(
         title: Text('Что бы вы хотели добавить?'),
-        actions: [okButton, cancelButton],
+        actions: [
+          okButton,
+          categoriesNotifier.categoriesList.isNotEmpty
+              ? cancelButton
+              : SizedBox()
+        ],
       );
       showDialog(
         context: context,
@@ -228,148 +230,250 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    Widget _menuItem(int index) {
-      return Container(
-        color: c_background,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 5.0),
-          child: Container(
-            height: 100,
-            child: InkWell(
-              onTap: () async {
-                foodNotifier.currentFood = foodNotifier.foodList[index];
-                if (_selectedIndex == 0) {
-                  _setCategory(categoriesNotifier.categoriesList[0].title);
-                }
+    Widget _setMenu() {
+      return ListView.builder(
+        padding: EdgeInsets.only(
+          left: 25.0,
+          top: 0.0,
+          right: 30.0,
+          bottom: 60.0,
+        ),
+        itemCount: foodNotifier.foodList.length,
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Container(
+            color: c_background,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 5.0),
+              child: Container(
+                height: 100,
+                child: InkWell(
+                  onTap: () async {
+                    foodNotifier.currentFood = foodNotifier.foodList[index];
+                    if (_selectedIndex == 0) {
+                      _setCategory(categoriesNotifier.categoriesList[0].title);
+                    }
 
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FoodForm(
-                      isUpdating: true,
-                      restaurant: _restaurant,
-                      address: _address,
-                      category: _category,
-                    ),
-                  ),
-                );
-                _refreshList(
-                    categoriesNotifier.categoriesList[_selectedIndex].title);
-              },
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 80,
-                    height: 80,
-                    child: Card(
-                      semanticContainer: true,
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FoodForm(
+                          isUpdating: true,
+                          restaurant: _uid,
+                          address: _addressId,
+                          category: _category,
+                        ),
                       ),
-                      child: foodNotifier.foodList[index].imageLow != null
-                          ? CachedNetworkImage(
-                              imageUrl: foodNotifier.foodList[index].imageLow,
-                              fit: BoxFit.cover,
-                              progressIndicatorBuilder:
-                                  (context, url, downloadProgress) => Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: CircularProgressIndicator(
-                                    value: downloadProgress.progress),
+                    );
+                    _refreshList(categoriesNotifier
+                        .categoriesList[_selectedIndex].title);
+                  },
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: 80,
+                        height: 80,
+                        child: Card(
+                          semanticContainer: true,
+                          clipBehavior: Clip.antiAliasWithSaveLayer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          child: foodNotifier.foodList[index].imageLow != null
+                              ? CachedNetworkImage(
+                                  imageUrl:
+                                      foodNotifier.foodList[index].imageLow,
+                                  fit: BoxFit.cover,
+                                  progressIndicatorBuilder:
+                                      (context, url, downloadProgress) =>
+                                          Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: CircularProgressIndicator(
+                                        value: downloadProgress.progress),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Icon(Icons.error),
+                                )
+                              : Image.asset('assets/placeholder_1024.png',
+                                  fit: BoxFit.cover),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(10.0, 2.0, 5.0, 2.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                foodNotifier.foodList[index].title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: t_primary,
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              errorWidget: (context, url, error) =>
-                                  Icon(Icons.error),
-                            )
-                          : Image.asset('assets/placeholder_1024.png',
-                              fit: BoxFit.cover),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10.0, 2.0, 5.0, 2.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            foodNotifier.foodList[index].title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: t_primary,
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            foodNotifier.foodList[index].description,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: t_secondary,
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        Text(
-                          '₴',
-                          style: TextStyle(
-                            color: t_primary,
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
+                              SizedBox(height: 5),
+                              Text(
+                                foodNotifier.foodList[index].description,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: t_secondary,
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(width: 2),
-                        _price(foodNotifier.foodList[index].subPrice[0]),
-                      ],
-                    ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            Text(
+                              '₴',
+                              style: TextStyle(
+                                color: t_primary,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 2),
+                            _price(foodNotifier.foodList[index].subPrice[0]),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       );
     }
 
     Widget _drawerHeader() {
-      return Container(
-        width: double.infinity,
-        height: 150,
-        color: c_primary,
-        padding: EdgeInsets.fromLTRB(16.0, 20.0, 0.0, 20.0),
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: RawMaterialButton(
-                onPressed: () {},
-                fillColor: c_secondary.withOpacity(0.5),
-                child: Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                ),
-                padding: EdgeInsets.all(10.0),
-                shape: CircleBorder(),
+      return _addressId != null
+          ? Container(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.30,
+              color: c_primary,
+              child: Stack(
+                children: [
+                  profileNotifier.profileList[0].image != null &&
+                          profileNotifier.profileList.isNotEmpty
+                      ? Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: CachedNetworkImage(
+                            imageUrl: profileNotifier.profileList[0].image,
+                            fit: BoxFit.cover,
+                            progressIndicatorBuilder:
+                                (context, url, downloadProgress) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: Colors.white,
+                                  value: downloadProgress.progress,
+                                  strokeWidth: 10,
+                                ),
+                              );
+                            },
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/placeholder_1024.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                  profileNotifier.profileList[0].image != null
+                      ? Container(
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.80,
+                          alignment: Alignment.topCenter,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: <Color>[
+                                Colors.black.withAlpha(0),
+                                Colors.black12,
+                                Colors.black87,
+                              ],
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 16.0, right: 10, bottom: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              authNotifier.user.displayName,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            profileNotifier.profileList.isNotEmpty
+                                ? Text(
+                                    profileNotifier.profileList[0].address,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  )
+                                : SizedBox(),
+                          ],
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          color: Colors.white,
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileScreen(),
+                              ),
+                            );
+                            getProfile(profileNotifier, _uid, _addressId);
+                          },
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
-            ),
-            profileNotifier.profileList.isNotEmpty
-                ? Column(
+            )
+          : Container(
+              width: double.infinity,
+              height: 100,
+              color: c_primary,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16.0, bottom: 20.0),
+                child: SafeArea(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        profileNotifier.profileList[0].title,
+                        authNotifier.user.displayName,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 20.0,
@@ -377,63 +481,103 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        profileNotifier.profileList[0].address,
+                        'Выберите адрес',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14.0,
                           fontWeight: FontWeight.normal,
                         ),
-                      ),
+                      )
                     ],
-                  )
-                : SizedBox(),
-          ],
-        ),
-      );
+                  ),
+                ),
+              ),
+            );
     }
 
     Widget _drawerAddresses(DocumentSnapshot document) {
       return ListTile(
-        onTap: () {},
-        title: Text(document.data['address']),
+        onTap: () {
+          setState(() => _addressId = document.data['id']);
+          getCategories(categoriesNotifier, _uid, _addressId);
+          getProfile(profileNotifier, _uid, _addressId);
+        },
+        title: Text(
+          document.data['address'],
+          style: TextStyle(
+            color: t_primary,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      );
+    }
+
+    _showAddAddress() {
+      Widget okButton = FlatButton(
+        child: Text("Создать"),
+        onPressed: () {
+          if (_categoryController.text.trim().length > 3) {
+            Profile profile = Profile();
+            addAddress(
+              profile,
+              authNotifier.user.uid,
+              authNotifier.user.displayName,
+              _categoryController.text.trim(),
+            );
+            _categoryController.clear();
+            Navigator.pop(context);
+          }
+        },
+      );
+      Widget cancelButton = FlatButton(
+        child: Text("Отмена"),
+        onPressed: () => Navigator.pop(context),
+      );
+      AlertDialog alert = AlertDialog(
+        title: Text('Введите новый адрес'),
+        content: TextField(
+          controller: _categoryController,
+          maxLength: 50,
+          maxLines: 1,
+          keyboardType: TextInputType.text,
+          style: TextStyle(fontSize: 20, color: t_primary),
+          decoration: InputDecoration(labelText: 'Название'),
+        ),
+        actions: [cancelButton, okButton],
+      );
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        },
       );
     }
 
     return Scaffold(
+      backgroundColor:
+          foodNotifier.foodList.isNotEmpty ? c_background : Colors.white,
       appBar: AppBar(
         backgroundColor: c_primary,
-        title: Text(authNotifier.user.displayName),
+        title: Text('Меню'),
         centerTitle: true,
-        actions: <Widget>[
-          // action button
-          FlatButton(
-            onPressed: () => signOut(authNotifier),
-            child: Text(
-              "выйти",
-              style: TextStyle(fontSize: 16, color: Colors.white),
-            ),
-          ),
-        ],
       ),
       drawer: Drawer(
         child: Column(
           children: [
             _drawerHeader(),
             StreamBuilder(
-              stream: Firestore.instance.collection(_restaurant).snapshots(),
+              stream: Firestore.instance.collection(_uid).snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('Something went wrong'));
                 }
 
                 if (!snapshot.hasData) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 0.0),
-                    child: CircularProgressIndicator(strokeWidth: 10),
-                  );
+                  return CircularProgressIndicator(strokeWidth: 10);
                 }
 
                 return ListView.builder(
+                  padding: const EdgeInsets.only(top: 0.0),
                   itemCount: snapshot.data.documents.length,
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -442,6 +586,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
               },
+            ),
+            ListTile(
+              leading: Icon(Icons.add),
+              title: Text(
+                'Добавить адрес',
+                style: TextStyle(color: t_primary),
+              ),
+              onTap: () => _showAddAddress(),
             ),
           ],
         ),
@@ -472,30 +624,49 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           }),
                     ),
-                    Stack(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(top: 100),
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 10),
-                          ),
-                        ),
-                        ListView.builder(
-                          padding: EdgeInsets.only(
-                            left: 25.0,
-                            top: 0.0,
-                            right: 30.0,
-                            bottom: 60.0,
-                          ),
-                          itemCount: foodNotifier.foodList.length,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            return _menuItem(index);
-                          },
-                        ),
-                      ],
-                    ),
+                    foodNotifier.foodList.isNotEmpty
+                        ? _setMenu()
+                        : Column(
+                            children: [
+                              SizedBox(height: 40.0),
+                              Image.asset(
+                                'assets/empty_search.png',
+                                fit: BoxFit.cover,
+                              ),
+                              SizedBox(height: 40.0),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0),
+                                child: Text(
+                                  categoriesNotifier.categoriesList.isEmpty
+                                      ? 'Меню слишком пустое'
+                                      : 'Категория пустует',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: t_primary,
+                                    fontSize: 22.0,
+                                    letterSpacing: 1.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                    20.0, 10.0, 20.0, 0.0),
+                                child: Text(
+                                  categoriesNotifier.categoriesList.isEmpty
+                                      ? 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить категорию.'
+                                      : 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить блюдо.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.black38,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
                   ],
                 ),
               ],
@@ -504,15 +675,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: c_secondary,
-        elevation: 4.0,
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'ДОБАВИТЬ',
-          style: TextStyle(color: Colors.white),
+      floatingActionButton: Visibility(
+        visible: profileNotifier.profileList.isNotEmpty && _addressId != null
+            ? true
+            : false,
+        child: FloatingActionButton.extended(
+          backgroundColor: c_secondary,
+          elevation: 4.0,
+          icon: const Icon(Icons.add),
+          label: const Text(
+            'ДОБАВИТЬ',
+            style: TextStyle(color: Colors.white),
+          ),
+          onPressed: () => _showCreateDialog(),
         ),
-        onPressed: () => _showCreateDialog(),
       ),
     );
   }

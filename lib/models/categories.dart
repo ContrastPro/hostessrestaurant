@@ -4,6 +4,7 @@ class Categories {
   String id;
   String title;
   Timestamp createdAt;
+  Timestamp updatedAt;
 
   Categories();
 
@@ -11,6 +12,7 @@ class Categories {
     id = data['id'];
     title = data['title'];
     createdAt = data['createdAt'];
+    updatedAt = data['updatedAt'];
   }
 
   Map<String, dynamic> toMap() {
@@ -18,6 +20,7 @@ class Categories {
       'id': id,
       'title': title,
       'createdAt': createdAt,
+      'updatedAt': updatedAt
     };
   }
 }

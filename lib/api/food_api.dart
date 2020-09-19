@@ -7,10 +7,10 @@ import 'package:hostessrestaurant/notifier/food_notifier.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-getFoods(FoodNotifier foodNotifier, String restaurant, String address,
+getFoods(FoodNotifier foodNotifier, String uid, String address,
     String category) async {
   QuerySnapshot snapshot = await Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Menu')
@@ -28,7 +28,7 @@ getFoods(FoodNotifier foodNotifier, String restaurant, String address,
 }
 
 addFood(Food food, File fileHigh, File fileLow, Function foodUploaded,
-    String restaurant, String address, String category) async {
+    String uid, String address, String category) async {
   if (fileHigh != null) {
     var uuid = Uuid().v4();
 
@@ -39,11 +39,11 @@ addFood(Food food, File fileHigh, File fileLow, Function foodUploaded,
     ///
     final StorageReference firebaseStorageRefHigh = FirebaseStorage.instance
         .ref()
-        .child('$restaurant/imageHigh/$uuid$fileExtensionHigh');
+        .child('$uid/imageHigh/$uuid$fileExtensionHigh');
 
     final StorageReference firebaseStorageRefLow = FirebaseStorage.instance
         .ref()
-        .child('$restaurant/imageLow/$uuid$fileExtensionLow');
+        .child('$uid/imageLow/$uuid$fileExtensionLow');
 
     ///
 
@@ -69,24 +69,17 @@ addFood(Food food, File fileHigh, File fileLow, Function foodUploaded,
     print('uploaded image successfully: $_urlHigh\n$_urlLow');
 
     ///
-    _addFood(
-        food, foodUploaded, _urlHigh, _urlLow, restaurant, address, category);
+    _addFood(food, foodUploaded, _urlHigh, _urlLow, uid, address, category);
   } else {
     /// Uploading Food without Image
-    _addFood(food, foodUploaded, null, null, restaurant, address, category);
+    _addFood(food, foodUploaded, null, null, uid, address, category);
   }
 }
 
-_addFood(
-    Food food,
-    Function foodUploaded,
-    String imageUrlHigh,
-    String imageUrlLow,
-    String restaurant,
-    String address,
-    String category) async {
+_addFood(Food food, Function foodUploaded, String imageUrlHigh,
+    String imageUrlLow, String uid, String address, String category) async {
   CollectionReference foodRef = Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Menu')
@@ -110,17 +103,10 @@ _addFood(
   foodUploaded(food);
 }
 
-editFood(
-    Food food,
-    bool imageExist,
-    File fileHigh,
-    File fileLow,
-    Function foodUploaded,
-    String restaurant,
-    String address,
-    String category) async {
+editFood(Food food, bool imageExist, File fileHigh, File fileLow,
+    Function foodUploaded, String uid, String address, String category) async {
   CollectionReference foodRef = Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Menu')
@@ -148,11 +134,11 @@ editFood(
     ///
     final StorageReference firebaseStorageRefHigh = FirebaseStorage.instance
         .ref()
-        .child('$restaurant/imageHigh/$uuid$fileExtensionHigh');
+        .child('$uid/imageHigh/$uuid$fileExtensionHigh');
 
     final StorageReference firebaseStorageRefLow = FirebaseStorage.instance
         .ref()
-        .child('$restaurant/imageLow/$uuid$fileExtensionLow');
+        .child('$uid/imageLow/$uuid$fileExtensionLow');
 
     ///
 
@@ -190,7 +176,7 @@ editFood(
   print('edit food with id: ${food.id}');
 }
 
-deleteFood(Food food, Function foodDeleted, String restaurant, String address,
+deleteFood(Food food, Function foodDeleted, String uid, String address,
     String category) async {
   if (food.imageHigh != null) {
     ///
@@ -207,7 +193,7 @@ deleteFood(Food food, Function foodDeleted, String restaurant, String address,
   }
 
   await Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Menu')

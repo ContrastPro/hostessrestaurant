@@ -398,10 +398,13 @@ class _FoodFormState extends State<FoodForm> {
     _currentFood.subPrice = _subPrice;
 
     if (_currentFood.subPrice.isNotEmpty) {
-      _currentFood.title.isNotEmpty
-          ? addFood(_currentFood, _imageFileHigh, _imageFileLow,
-              _onFoodUploaded, restaurant, address, category)
-          : _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      if (_currentFood.title.isNotEmpty) {
+        setState(() => _isUploading = !_isUploading);
+        addFood(_currentFood, _imageFileHigh, _imageFileLow, _onFoodUploaded,
+            restaurant, address, category);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
     } else {
       _showAlertDialog('Похоже вы забыли указать цену');
     }
@@ -414,10 +417,13 @@ class _FoodFormState extends State<FoodForm> {
     bool imageExist;
     if (_currentFood.subPrice.isNotEmpty) {
       _currentFood.imageHigh != null ? imageExist = true : imageExist = false;
-      _currentFood.title.isNotEmpty
-          ? editFood(_currentFood, imageExist, _imageFileHigh, _imageFileLow,
-              _onFoodUploaded, restaurant, address, category)
-          : _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      if (_currentFood.title.isNotEmpty) {
+        setState(() => _isUploading = !_isUploading);
+        editFood(_currentFood, imageExist, _imageFileHigh, _imageFileLow,
+            _onFoodUploaded, restaurant, address, category);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
     } else {
       _showAlertDialog('Похоже вы забыли указать цену');
     }
@@ -607,7 +613,6 @@ class _FoodFormState extends State<FoodForm> {
         backgroundColor: c_secondary,
         onPressed: () {
           isUpdating != true ? _addFood() : _editFood();
-          setState(() => _isUploading = !_isUploading);
         },
         icon: Icon(isUpdating != true ? Icons.create : Icons.save),
         label: Text(

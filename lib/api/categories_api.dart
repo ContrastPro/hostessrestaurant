@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hostessrestaurant/models/categories.dart';
 import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 
-getCategories(CategoriesNotifier categoriesNotifier, String restaurant,
-    String address) async {
+getCategories(
+    CategoriesNotifier categoriesNotifier, String uid, String address) async {
   QuerySnapshot snapshot = await Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Categories')
@@ -23,10 +23,10 @@ getCategories(CategoriesNotifier categoriesNotifier, String restaurant,
   categoriesNotifier.categoriesList = _categoriesList;
 }
 
-addCategory(Categories categories, Function categoriesUploaded,
-    String restaurant, String address, String category) async {
+addCategory(Categories categories, Function categoriesUploaded, String uid,
+    String address, String category) async {
   CollectionReference categoryRef = Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Categories')
@@ -40,17 +40,17 @@ addCategory(Categories categories, Function categoriesUploaded,
 
   categories.id = documentRef.documentID;
 
-  print('uploaded food successfully: ${categories.id}');
+  print('uploaded category successfully: ${categories.id}');
 
   await documentRef.setData(categories.toMap(), merge: true);
 
   categoriesUploaded(categories);
 }
 
-deleteCategory(Categories categories, Function categoriesDeleted,
-    String restaurant, String address, String category) async {
+deleteCategory(Categories categories, Function categoriesDeleted, String uid,
+    String address, String category) async {
   await Firestore.instance
-      .collection(restaurant)
+      .collection(uid)
       .document(address)
       .collection('ru')
       .document('Categories')
