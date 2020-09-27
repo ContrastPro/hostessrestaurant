@@ -363,132 +363,135 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget _drawerHeader() {
       return _addressId != null
           ? Container(
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.30,
-              color: c_primary,
-              child: Stack(
-                children: [
-                  profileNotifier.profileList[0].image != null &&
-                          profileNotifier.profileList.isNotEmpty
-                      ? Container(
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: CachedNetworkImage(
-                            imageUrl: profileNotifier.profileList[0].image,
-                            fit: BoxFit.cover,
-                            progressIndicatorBuilder:
-                                (context, url, downloadProgress) {
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  backgroundColor: Colors.white,
-                                  value: downloadProgress.progress,
-                                  strokeWidth: 10,
-                                ),
-                              );
-                            },
-                            errorWidget: (context, url, error) => Image.asset(
-                              'assets/placeholder_1024.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        )
-                      : SizedBox(),
-                  profileNotifier.profileList[0].image != null
-                      ? Container(
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.80,
-                          alignment: Alignment.topCenter,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: <Color>[
-                                Colors.black.withAlpha(0),
-                                Colors.black12,
-                                Colors.black87,
-                              ],
-                            ),
-                          ),
-                        )
-                      : SizedBox(),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 16.0, right: 10, bottom: 20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              authNotifier.user.displayName,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            profileNotifier.profileList.isNotEmpty
-                                ? Text(
-                                    profileNotifier.profileList[0].address,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  )
-                                : SizedBox(),
-                          ],
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          color: Colors.white,
-                          onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProfileScreen(),
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.30,
+            color: c_primary,
+            child: Stack(
+              children: [
+                profileNotifier.profileList[0].image != null &&
+                        profileNotifier.profileList.isNotEmpty
+                    ? Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: CachedNetworkImage(
+                          imageUrl: profileNotifier.profileList[0].image,
+                          fit: BoxFit.cover,
+                          progressIndicatorBuilder:
+                              (context, url, downloadProgress) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                backgroundColor: Colors.white,
+                                value: downloadProgress.progress,
+                                strokeWidth: 10,
                               ),
                             );
-                            getProfile(profileNotifier, _uid, _addressId);
                           },
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            )
-          : Container(
-              width: double.infinity,
-              height: 100,
-              color: c_primary,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16.0, bottom: 20.0),
-                child: SafeArea(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        authNotifier.user.displayName,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Выберите адрес',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.normal,
+                          errorWidget: (context, url, error) =>
+                              Image.asset(
+                            'assets/placeholder_1024.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       )
+                    : SizedBox(),
+                profileNotifier.profileList[0].image != null
+                    ? Container(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.80,
+                        alignment: Alignment.topCenter,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: <Color>[
+                              Colors.black.withAlpha(0),
+                              Colors.black12,
+                              Colors.black87,
+                            ],
+                          ),
+                        ),
+                      )
+                    : SizedBox(),
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 16.0, right: 10, bottom: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            authNotifier.user.displayName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          profileNotifier.profileList.isNotEmpty
+                              ? Text(
+                                  profileNotifier.profileList[0].address,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14.0,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                )
+                              : SizedBox(),
+                        ],
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        color: Colors.white,
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProfileScreen(),
+                            ),
+                          );
+                          getProfile(profileNotifier, _uid, _addressId);
+                        },
+                      ),
                     ],
+                  ),
+                )
+              ],
+            ),
+          )
+          : Container(
+              color: c_primary,
+              child: SafeArea(
+                child: Container(
+                  width: double.infinity,
+                  height: 100,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0, bottom: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          authNotifier.user.displayName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Выберите адрес',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),

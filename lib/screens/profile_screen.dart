@@ -533,7 +533,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   RawMaterialButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(
-                          text: authNotifier.user.uid + "//" + profile.id));
+                          text: authNotifier.user.uid + "#" + profile.id));
                     },
                     fillColor: c_secondary.withOpacity(0.5),
                     child: Icon(

@@ -346,6 +346,7 @@ class _FoodFormState extends State<FoodForm> {
     Widget okButton = FlatButton(
         child: Text("Да"),
         onPressed: () {
+          setState(() => _isUploading = !_isUploading);
           deleteFood(
               _currentFood, _onFoodDeleted, restaurant, address, category);
           Navigator.of(context).pop();
@@ -596,7 +597,7 @@ class _FoodFormState extends State<FoodForm> {
                       Text(
                         isUpdating != true
                             ? "Добавляем блюдо"
-                            : 'Вносим изменения',
+                            : "Вносим изменения",
                         style: TextStyle(
                             fontSize: 22,
                             color: Colors.white,
@@ -616,7 +617,7 @@ class _FoodFormState extends State<FoodForm> {
         },
         icon: Icon(isUpdating != true ? Icons.create : Icons.save),
         label: Text(
-          isUpdating != true ? "ОПУБЛИКОВАТЬ" : 'СОХРАНИТЬ',
+          isUpdating != true ? "ОПУБЛИКОВАТЬ" : "СОХРАНИТЬ",
           style: TextStyle(color: Colors.white),
         ),
         foregroundColor: Colors.white,
