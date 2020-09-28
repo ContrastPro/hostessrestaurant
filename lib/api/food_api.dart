@@ -7,12 +7,12 @@ import 'package:hostessrestaurant/notifier/food_notifier.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-getFoods(FoodNotifier foodNotifier, String uid, String address,
+getFoods(FoodNotifier foodNotifier, String uid, String address, String language,
     String category) async {
   QuerySnapshot snapshot = await Firestore.instance
       .collection(uid)
       .document(address)
-      .collection('ru')
+      .collection(language)
       .document('Menu')
       .collection(category)
       .orderBy("createdAt", descending: false)
@@ -27,8 +27,8 @@ getFoods(FoodNotifier foodNotifier, String uid, String address,
   foodNotifier.foodList = _foodList;
 }
 
-addFood(Food food, File fileHigh, File fileLow, Function foodUploaded,
-    String uid, String address, String category) async {
+addFood(Food food, String uid, String address, String language, String category,
+    File fileHigh, File fileLow, Function foodUploaded) async {
   if (fileHigh != null) {
     var uuid = Uuid().v4();
 
@@ -69,19 +69,27 @@ addFood(Food food, File fileHigh, File fileLow, Function foodUploaded,
     print('uploaded image successfully: $_urlHigh\n$_urlLow');
 
     ///
-    _addFood(food, foodUploaded, _urlHigh, _urlLow, uid, address, category);
+    _addFood(food, uid, address, language, category, _urlHigh, _urlLow,
+        foodUploaded);
   } else {
     /// Uploading Food without Image
-    _addFood(food, foodUploaded, null, null, uid, address, category);
+    _addFood(food, uid, address, language, category, null, null, foodUploaded);
   }
 }
 
-_addFood(Food food, Function foodUploaded, String imageUrlHigh,
-    String imageUrlLow, String uid, String address, String category) async {
+_addFood(
+    Food food,
+    String uid,
+    String address,
+    String language,
+    String category,
+    String imageUrlHigh,
+    String imageUrlLow,
+    Function foodUploaded) async {
   CollectionReference foodRef = Firestore.instance
       .collection(uid)
       .document(address)
-      .collection('ru')
+      .collection(language)
       .document('Menu')
       .collection(category);
 
@@ -103,12 +111,20 @@ _addFood(Food food, Function foodUploaded, String imageUrlHigh,
   foodUploaded(food);
 }
 
-editFood(Food food, bool imageExist, File fileHigh, File fileLow,
-    Function foodUploaded, String uid, String address, String category) async {
+editFood(
+    Food food,
+    String uid,
+    String address,
+    String language,
+    String category,
+    bool imageExist,
+    File fileHigh,
+    File fileLow,
+    Function foodUploaded) async {
   CollectionReference foodRef = Firestore.instance
       .collection(uid)
       .document(address)
-      .collection('ru')
+      .collection(language)
       .document('Menu')
       .collection(category);
 
@@ -176,8 +192,8 @@ editFood(Food food, bool imageExist, File fileHigh, File fileLow,
   print('edit food with id: ${food.id}');
 }
 
-deleteFood(Food food, Function foodDeleted, String uid, String address,
-    String category) async {
+deleteFood(Food food, String uid, String address, String language,
+    String category, Function foodDeleted) async {
   if (food.imageHigh != null) {
     ///
     StorageReference storageReferenceHigh =
@@ -195,11 +211,12 @@ deleteFood(Food food, Function foodDeleted, String uid, String address,
   await Firestore.instance
       .collection(uid)
       .document(address)
-      .collection('ru')
+      .collection(language)
       .document('Menu')
       .collection(category)
       .document(food.id)
       .delete();
+
   foodDeleted(food);
 
   print('delete food successfully with id: ${food.id}');

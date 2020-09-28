@@ -55,14 +55,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _saveCategory(String categoryText) {
-    addCategory(
-        _categories, _onCategoryUploaded, _uid, _addressId, categoryText);
+    /*addCategory(_categories, _onCategoryUploaded, _uid, _addressId, categoryText);*/
+
+    addCategory(_categories, _uid, _addressId, _language, categoryText,
+        _onCategoryUploaded);
   }
 
   _onCategoryUploaded(Categories categories) {
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _uid, _addressId);
+    /*getCategories(categoriesNotifier, _uid, _addressId);*/
+    getCategories(categoriesNotifier, _uid, _addressId, _language);
     Navigator.pop(context);
   }
 
@@ -98,17 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _deleteCategory(int index) {
-    deleteCategory(_categories, _onCategoryDelete, _uid, _addressId, _category);
-  }
-
-  _onCategoryDelete(Categories categories) {
-    CategoriesNotifier categoriesNotifier =
-        Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _uid, _addressId);
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     AuthNotifier authNotifier = Provider.of<AuthNotifier>(context);
@@ -118,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     FoodNotifier foodNotifier = Provider.of<FoodNotifier>(context);
 
     Future<void> _refreshList(String category) async {
-      getFoods(foodNotifier, _uid, _addressId, category);
+      getFoods(foodNotifier, _uid, _addressId, _language, category);
     }
 
     _showCreateDialog() {
@@ -141,8 +133,9 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => FoodForm(
                 isUpdating: false,
-                restaurant: _uid,
+                uid: _uid,
                 address: _addressId,
+                language: _language,
                 category: _category,
               ),
             ),
@@ -167,32 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    _showDeleteDialog(int index) {
-      Widget okButton = FlatButton(
-        child: Text("Удалить"),
-        onPressed: () {
-          setState(
-              () => _categories = categoriesNotifier.categoriesList[index]);
-          _deleteCategory(index);
-        },
-      );
-      AlertDialog alert = AlertDialog(
-        title: Text('Внимание!'),
-        content: Text(
-            'Все блюда в этой категории будут автоматически удалены без возможности востановления'),
-        actions: [okButton],
-      );
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return alert;
-        },
-      );
-    }
-
     Widget _chip(int index) {
       return GestureDetector(
-        onLongPress: () => _showDeleteDialog(index),
         child: FilterChip(
           padding: EdgeInsets.symmetric(horizontal: 8.0),
           label: Text(
@@ -264,8 +233,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(
                         builder: (context) => FoodForm(
                           isUpdating: true,
-                          restaurant: _uid,
+                          uid: _uid,
                           address: _addressId,
+                          language: _language,
                           category: _category,
                         ),
                       ),
@@ -432,9 +402,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   height: 50,
                                   width: isClicked
                                       ? MediaQuery.of(context).size.width
-                                      : 0.0,
+                                      : 25.0,
                                   decoration: BoxDecoration(
-                                    color: c_background,
+                                    color: c_background.withOpacity(0.6),
                                     borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(30.0),
                                       bottomLeft: Radius.circular(30.0),
@@ -442,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   margin: EdgeInsets.only(right: 25),
                                   child: ListView.builder(
-                                    padding: EdgeInsets.only(right: 35),
+                                      padding: EdgeInsets.only(right: 35),
                                       scrollDirection: Axis.horizontal,
                                       itemCount: profileNotifier
                                           .profileList[0].subLanguages.length,
@@ -457,6 +427,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     .subLanguages[index];
                                                 isClicked = !isClicked;
                                               });
+                                              getCategories(categoriesNotifier,
+                                                  _uid, _addressId, _language);
+                                              if (_addAddress == true) {
+                                                setState(() =>
+                                                    _addAddress = !_addAddress);
+                                              }
                                             },
                                             child: Container(
                                               width: 35,
@@ -578,7 +554,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _addressId = document.data['id'];
             _language = profileNotifier.profileList[0].subLanguages[0];
           });
-          getCategories(categoriesNotifier, _uid, _addressId);
+          getCategories(categoriesNotifier, _uid, _addressId, _language);
           if (_addAddress == true) {
             setState(() => _addAddress = !_addAddress);
             Navigator.pop(context);
@@ -617,7 +593,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 if (!snapshot.hasData) {
-                  return CircularProgressIndicator(strokeWidth: 10);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 50),
+                    child: CircularProgressIndicator(strokeWidth: 10),
+                  );
                 }
 
                 return ListView.builder(

@@ -8,6 +8,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hostessrestaurant/api/login_api.dart';
 import 'package:hostessrestaurant/api/profile_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
+import 'package:hostessrestaurant/models/languages.dart';
 import 'package:hostessrestaurant/models/profile.dart';
 import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 import 'package:hostessrestaurant/notifier/profile_notifier.dart';
@@ -22,22 +23,25 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploading = false;
+  bool isClicked = false;
   String _imageUrl;
   File _imageFile;
   Profile profile = Profile();
+  Item _selectedLanguage;
+  List _subLanguages = [];
 
   @override
   void initState() {
     ProfileNotifier profileNotifier =
         Provider.of<ProfileNotifier>(context, listen: false);
     _imageUrl = profileNotifier.profileList[0].image;
+    _subLanguages.addAll(profileNotifier.profileList[0].subLanguages);
 
     profile.id = profileNotifier.profileList[0].id;
     profile.image = profileNotifier.profileList[0].image;
     profile.title = profileNotifier.profileList[0].title;
     profile.address = profileNotifier.profileList[0].address;
     profile.subTime = profileNotifier.profileList[0].subTime;
-    profile.subLanguages = profileNotifier.profileList[0].subLanguages;
     profile.createdAt = profileNotifier.profileList[0].createdAt;
     super.initState();
   }
@@ -420,54 +424,182 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         EdgeInsets.symmetric(horizontal: 30.0, vertical: 35.0),
                     child: Form(
                       autovalidate: true,
-                      child: Column(children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(15.0),
-                          child: Stack(
-                            children: [
-                              Image.asset(
-                                'assets/login.jpg',
-                                fit: BoxFit.cover,
-                                width: 100,
-                                height: 100,
-                              ),
-                              Container(
-                                width: 100,
-                                height: 100,
-                                child: FlatButton(
-                                  padding: EdgeInsets.all(16),
-                                  color: Colors.black26,
-                                  child: Icon(
-                                    Icons.camera_enhance,
-                                    size: 40,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => _getLocalImage(),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15.0),
+                                child: Stack(
+                                  children: [
+                                    Image.asset(
+                                      'assets/login.jpg',
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: 100,
+                                    ),
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      child: FlatButton(
+                                        padding: EdgeInsets.all(16),
+                                        color: Colors.black26,
+                                        child: Icon(
+                                          Icons.camera_enhance,
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () => _getLocalImage(),
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 32),
-                        _buildAddressField(),
-                        SizedBox(height: 32),
-                        _timePicker(),
-                        SizedBox(height: 32),
-                        Center(
-                          child: FlatButton(
-                            onPressed: () {
-                              signOut(authNotifier);
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              "Выйти из аккаунта",
-                              style: TextStyle(
-                                  fontSize: 20, color: Colors.redAccent),
+                              ),
                             ),
-                          ),
-                        ),
-                        SizedBox(height: 62),
-                      ]),
+                            SizedBox(height: 32),
+                            _buildAddressField(),
+                            SizedBox(height: 32),
+                            _timePicker(),
+                            SizedBox(height: 32),
+                            Text(
+                              'Настройка меню',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: t_primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Текущие языки',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: t_primary,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Stack(
+                              children: [
+                                Container(
+                                  height: 50,
+                                  margin: EdgeInsets.only(left: 50),
+                                  child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: _subLanguages.length,
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(5.5),
+                                          child: Container(
+                                            width: 45,
+                                            height: 45,
+                                            child: Image.asset(
+                                                'assets/${_subLanguages[index]}.png'),
+                                          ),
+                                        );
+                                      }),
+                                ),
+                                FloatingActionButton(
+                                  heroTag: 'price',
+                                  backgroundColor: c_secondary,
+                                  elevation: 0,
+                                  highlightElevation: 0,
+                                  mini: true,
+                                  onPressed: () =>
+                                      setState(() => isClicked = !isClicked),
+                                  child: Icon(isClicked
+                                      ? Icons.expand_less
+                                      : Icons.add),
+                                  foregroundColor: Colors.white,
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 16),
+                            AnimatedContainer(
+                              duration: Duration(seconds: 1),
+                              curve: Curves.fastOutSlowIn,
+                              height: isClicked ? 50.0 : 0.0,
+                              padding: EdgeInsets.only(left: 8),
+                              child: ListView(
+                                padding: EdgeInsets.all(0.0),
+                                physics: NeverScrollableScrollPhysics(),
+                                children: [
+                                  DropdownButton<Item>(
+                                    isExpanded: true,
+                                    hint: Text(
+                                      "Дополнительный язык",
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                    value: _selectedLanguage,
+                                    onChanged: (Item value) {
+                                      if (!_subLanguages
+                                          .contains(value.language)) {
+                                        if (_selectedLanguage != null) {
+                                          _subLanguages.removeLast();
+                                        }
+                                        setState(() {
+                                          _selectedLanguage = value;
+                                          _subLanguages
+                                              .add(_selectedLanguage.language);
+                                        });
+                                      }
+                                    },
+                                    items: languages.map((Item lang) {
+                                      return DropdownMenuItem<Item>(
+                                        value: lang,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: <Widget>[
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  child: Image.asset(
+                                                      'assets/${lang.icon}'),
+                                                ),
+                                                SizedBox(width: 15),
+                                                Text(
+                                                  lang.title,
+                                                  style: TextStyle(
+                                                      color: t_primary,
+                                                      fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                            _subLanguages
+                                                    .contains(lang.language)
+                                                ? Icon(Icons.check)
+                                                : SizedBox(),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 62),
+                            Center(
+                              child: FlatButton(
+                                onPressed: () {
+                                  signOut(authNotifier);
+                                  Navigator.pop(context);
+                                },
+                                child: Text(
+                                  "Выйти из аккаунта",
+                                  style: TextStyle(
+                                      fontSize: 20, color: Colors.redAccent),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 62),
+                          ]),
                     ),
                   ),
                 );
@@ -484,6 +616,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bool imageExist;
       setState(() => _isUploading = !_isUploading);
       profile.image != null ? imageExist = true : imageExist = false;
+      profile.subLanguages = _subLanguages;
 
       editAddress(
         profile,

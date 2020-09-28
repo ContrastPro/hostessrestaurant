@@ -13,28 +13,38 @@ import 'package:provider/provider.dart';
 
 class FoodForm extends StatefulWidget {
   final bool isUpdating;
-  final String restaurant;
+  final String uid;
   final String address;
+  final String language;
   final String category;
 
-  FoodForm({this.isUpdating, this.restaurant, this.address, this.category});
+  FoodForm(
+      {this.isUpdating, this.uid, this.address, this.language, this.category});
 
   @override
   _FoodFormState createState() => _FoodFormState(
       isUpdating: isUpdating,
-      restaurant: restaurant,
+      uid: uid,
       address: address,
+      language: language,
       category: category);
 }
 
 class _FoodFormState extends State<FoodForm> {
-  _FoodFormState(
-      {this.isUpdating, this.restaurant, this.address, this.category});
+  _FoodFormState({
+    this.isUpdating,
+    this.uid,
+    this.address,
+    this.language,
+    this.category,
+  });
 
   final bool isUpdating;
-  final String restaurant;
+  final String uid;
   final String address;
+  final String language;
   final String category;
+
   Food _currentFood;
   String _imageUrlHigh, _imageUrlLow;
   File _imageFileHigh, _imageFileLow;
@@ -348,7 +358,7 @@ class _FoodFormState extends State<FoodForm> {
         onPressed: () {
           setState(() => _isUploading = !_isUploading);
           deleteFood(
-              _currentFood, _onFoodDeleted, restaurant, address, category);
+              _currentFood, uid, address, language, category, _onFoodDeleted);
           Navigator.of(context).pop();
         });
     Widget cancelButton = FlatButton(
@@ -401,8 +411,8 @@ class _FoodFormState extends State<FoodForm> {
     if (_currentFood.subPrice.isNotEmpty) {
       if (_currentFood.title.isNotEmpty) {
         setState(() => _isUploading = !_isUploading);
-        addFood(_currentFood, _imageFileHigh, _imageFileLow, _onFoodUploaded,
-            restaurant, address, category);
+        addFood(_currentFood, uid, address, language, category, _imageFileHigh,
+            _imageFileLow, _onFoodUploaded);
       } else {
         _showAlertDialog('Похоже вы забыли добавить навание блюда');
       }
@@ -420,8 +430,8 @@ class _FoodFormState extends State<FoodForm> {
       _currentFood.imageHigh != null ? imageExist = true : imageExist = false;
       if (_currentFood.title.isNotEmpty) {
         setState(() => _isUploading = !_isUploading);
-        editFood(_currentFood, imageExist, _imageFileHigh, _imageFileLow,
-            _onFoodUploaded, restaurant, address, category);
+        editFood(_currentFood, uid, address, language, category, imageExist,
+            _imageFileHigh, _imageFileLow, _onFoodUploaded);
       } else {
         _showAlertDialog('Похоже вы забыли добавить навание блюда');
       }
