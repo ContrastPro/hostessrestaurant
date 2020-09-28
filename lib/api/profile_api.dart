@@ -7,7 +7,8 @@ import 'package:hostessrestaurant/notifier/profile_notifier.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-getProfile(ProfileNotifier profileNotifier, String uid, String addressId) async {
+getProfile(
+    ProfileNotifier profileNotifier, String uid, String addressId) async {
   QuerySnapshot snapshot = await Firestore.instance
       .collection(uid)
       .where('id', isEqualTo: addressId)
@@ -23,7 +24,8 @@ getProfile(ProfileNotifier profileNotifier, String uid, String addressId) async 
   profileNotifier.profileList = _profileList;
 }
 
-addAddress(Profile profile, String uid, String title, String address) async {
+addAddress(Profile profile, String uid, String title, String address,
+    List subLanguages) async {
   CollectionReference newAddress = Firestore.instance.collection(uid);
 
   profile.title = title;
@@ -37,6 +39,8 @@ addAddress(Profile profile, String uid, String title, String address) async {
     "00:00 - 24:00",
     "00:00 - 24:00",
   ];
+
+  profile.subLanguages.addAll(subLanguages);
   profile.createdAt = Timestamp.now();
 
   DocumentReference documentRef = await newAddress.add(profile.toMap());

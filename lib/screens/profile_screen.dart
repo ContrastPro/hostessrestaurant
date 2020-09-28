@@ -25,20 +25,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _imageUrl;
   File _imageFile;
   Profile profile = Profile();
-  List _subTime = [];
 
   @override
   void initState() {
     ProfileNotifier profileNotifier =
         Provider.of<ProfileNotifier>(context, listen: false);
     _imageUrl = profileNotifier.profileList[0].image;
-    _subTime.addAll(profileNotifier.profileList[0].subTime);
 
     profile.id = profileNotifier.profileList[0].id;
     profile.image = profileNotifier.profileList[0].image;
     profile.title = profileNotifier.profileList[0].title;
     profile.address = profileNotifier.profileList[0].address;
     profile.subTime = profileNotifier.profileList[0].subTime;
+    profile.subLanguages = profileNotifier.profileList[0].subLanguages;
     profile.createdAt = profileNotifier.profileList[0].createdAt;
     super.initState();
   }
@@ -345,7 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return TextFormField(
         decoration: InputDecoration(
           labelText: 'Адрес',
-          prefixIcon: Icon(Icons.title),
+          prefixIcon: Icon(Icons.restaurant),
         ),
         maxLength: 50,
         maxLines: 1,
