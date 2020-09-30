@@ -23,12 +23,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploading = false;
-  bool isClicked = false;
+  bool _isClicked = false;
+  bool _globalSearch;
   String _imageUrl;
   File _imageFile;
-  Profile profile = Profile();
   Item _selectedLanguage;
   List _subLanguages = [];
+  Profile profile = Profile();
 
   @override
   void initState() {
@@ -36,11 +37,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Provider.of<ProfileNotifier>(context, listen: false);
     _imageUrl = profileNotifier.profileList[0].image;
     _subLanguages.addAll(profileNotifier.profileList[0].subLanguages);
+    _globalSearch = profileNotifier.profileList[0].globalSearch;
 
     profile.id = profileNotifier.profileList[0].id;
-    profile.image = profileNotifier.profileList[0].image;
     profile.title = profileNotifier.profileList[0].title;
     profile.address = profileNotifier.profileList[0].address;
+    profile.phone = profileNotifier.profileList[0].phone;
+    profile.image = profileNotifier.profileList[0].image;
     profile.subTime = profileNotifier.profileList[0].subTime;
     profile.createdAt = profileNotifier.profileList[0].createdAt;
     super.initState();
@@ -114,6 +117,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ProfileNotifier profileNotifier = Provider.of<ProfileNotifier>(context);
     AuthNotifier authNotifier = Provider.of<AuthNotifier>(context);
 
+    Widget _time() {
+      DateTime date = DateTime.now();
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.access_time,
+            color: Colors.white,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              profileNotifier.profileList[0].subTime[date.weekday - 1],
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.0,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    Widget _basicOptions() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Основные настройки',
+            style: TextStyle(
+              fontSize: 20,
+              color: t_primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 32),
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15.0),
+              child: Stack(
+                children: [
+                  Image.asset(
+                    'assets/login.jpg',
+                    fit: BoxFit.cover,
+                    width: 100,
+                    height: 100,
+                  ),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    child: FlatButton(
+                      padding: EdgeInsets.all(16),
+                      color: Colors.black26,
+                      child: Icon(
+                        Icons.camera_enhance,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => _getLocalImage(),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Адрес',
+              prefixIcon: Icon(Icons.restaurant),
+            ),
+            maxLength: 50,
+            maxLines: 1,
+            initialValue: profile.address,
+            keyboardType: TextInputType.text,
+            style: TextStyle(fontSize: 20, color: t_primary),
+            validator: (String value) {
+              if (value.isEmpty) {
+                return 'Название обязательно!';
+              }
+
+              if (value.length < 3) {
+                return 'Слишком короткое Название';
+              }
+
+              return null;
+            },
+            onChanged: (String value) {
+              profile.address = value;
+            },
+          ),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Номер телефона',
+              prefixIcon: Icon(Icons.phone),
+            ),
+            maxLength: 50,
+            maxLines: 1,
+            initialValue: profile.phone,
+            keyboardType: TextInputType.phone,
+            style: TextStyle(fontSize: 20, color: t_primary),
+            onChanged: (String value) {
+              profile.phone = value;
+            },
+          ),
+        ],
+      );
+    }
+
     Widget _timePicker() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,6 +238,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          Text(
+            'Время работы вашего заведения',
+            style: TextStyle(
+              fontSize: 16,
+              color: t_primary,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -138,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -163,7 +284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -191,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -216,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -244,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -269,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -297,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 18, color: t_primary),
                   validator: (String value) {
                     if (value.isEmpty) {
-                      return 'Название обязательно!';
+                      return 'Время обязательно!';
                     }
 
                     if (value.length < 13) {
@@ -321,54 +442,189 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    Widget _time() {
-      DateTime date = DateTime.now();
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+    Widget _setLanguage() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.access_time,
-            color: Colors.white,
-            size: 18.0,
-          ),
-          SizedBox(width: 10),
           Text(
-            profileNotifier.profileList[0].subTime[date.weekday - 1],
+            'Настройка меню',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 18.0,
+              fontSize: 20,
+              color: t_primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Текущие языки',
+            style: TextStyle(
+              fontSize: 16,
+              color: t_primary,
               fontWeight: FontWeight.normal,
+            ),
+          ),
+          SizedBox(height: 16),
+          Stack(
+            children: [
+              Container(
+                height: 50,
+                margin: EdgeInsets.only(left: 50),
+                child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _subLanguages.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.all(5.5),
+                        child: Container(
+                          width: 45,
+                          height: 45,
+                          child:
+                              Image.asset('assets/${_subLanguages[index]}.png'),
+                        ),
+                      );
+                    }),
+              ),
+              FloatingActionButton(
+                heroTag: 'price',
+                backgroundColor: c_secondary,
+                elevation: 0,
+                highlightElevation: 0,
+                mini: true,
+                onPressed: () => setState(() => _isClicked = !_isClicked),
+                child: Icon(_isClicked ? Icons.expand_less : Icons.add),
+                foregroundColor: Colors.white,
+              ),
+            ],
+          ),
+          AnimatedContainer(
+            duration: Duration(seconds: 1),
+            curve: Curves.fastOutSlowIn,
+            height: _isClicked ? 50.0 : 0.0,
+            padding: EdgeInsets.only(left: 8),
+            child: ListView(
+              padding: EdgeInsets.all(0.0),
+              physics: NeverScrollableScrollPhysics(),
+              children: [
+                DropdownButton<Item>(
+                  isExpanded: true,
+                  hint: Text(
+                    "Дополнительный язык",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  value: _selectedLanguage,
+                  onChanged: (Item value) {
+                    if (!_subLanguages.contains(value.language)) {
+                      if (_selectedLanguage != null) {
+                        _subLanguages.removeLast();
+                      }
+                      setState(() {
+                        _selectedLanguage = value;
+                        _subLanguages.add(_selectedLanguage.language);
+                      });
+                    }
+                  },
+                  items: languages.map((Item lang) {
+                    return DropdownMenuItem<Item>(
+                      value: lang,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                child: Image.asset('assets/${lang.icon}'),
+                              ),
+                              SizedBox(width: 15),
+                              Text(
+                                lang.title,
+                                style:
+                                    TextStyle(color: t_primary, fontSize: 18),
+                              ),
+                            ],
+                          ),
+                          _subLanguages.contains(lang.language)
+                              ? Icon(Icons.check)
+                              : SizedBox(),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
         ],
       );
     }
 
-    Widget _buildAddressField() {
-      return TextFormField(
-        decoration: InputDecoration(
-          labelText: 'Адрес',
-          prefixIcon: Icon(Icons.restaurant),
-        ),
-        maxLength: 50,
-        maxLines: 1,
-        initialValue: profile.address,
-        keyboardType: TextInputType.text,
-        style: TextStyle(fontSize: 20, color: t_primary),
-        validator: (String value) {
-          if (value.isEmpty) {
-            return 'Название обязательно!';
-          }
+    _editProfile() async {
+      bool imageExist;
+      profile.image != null ? imageExist = true : imageExist = false;
+      profile.subLanguages = _subLanguages;
+      profile.globalSearch = _globalSearch;
+      await editAddress(
+        profile,
+        authNotifier.user.uid,
+        imageExist,
+        _imageFile,
+      );
+      setState(() => _isUploading = !_isUploading);
+    }
 
-          if (value.length < 3) {
-            return 'Слишком короткое Название';
-          }
+    _addToGlobalSearch() async {
+      GlobalProfile globalProfile = GlobalProfile();
+      globalProfile.id = profile.id;
+      if (_globalSearch == true) {
+        globalProfile.globalId = authNotifier.user.uid + "#" + profile.id;
+        globalProfile.title = profile.title;
+        globalProfile.address = profile.address;
+        await addToGlobalSearch(globalProfile);
+        _editProfile();
+      } else {
+        await deleteFromGlobalSearch(globalProfile);
+        _editProfile();
+      }
+    }
 
-          return null;
-        },
-        onChanged: (String value) {
-          profile.address = value;
-        },
+    Widget _setGlobalSearch() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Глобальный поиск',
+            style: TextStyle(
+              fontSize: 20,
+              color: t_primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Ваше заведение смогут найти по названию',
+            style: TextStyle(
+              fontSize: 16,
+              color: t_primary,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Checkbox(
+                value: _globalSearch,
+                onChanged: (bool value) async {
+                  setState(() => _globalSearch = !_globalSearch);
+                  _addToGlobalSearch();
+                  setState(() => _isUploading = !_isUploading);
+                },
+              ),
+              Text("Отображать в глобальном поиске"),
+            ],
+          ),
+        ],
       );
     }
 
@@ -397,10 +653,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  SizedBox(height: 35),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          profile.address,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  profile.phone.isNotEmpty
+                      ? Column(
+                          children: [
+                            SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.phone,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    profile.phone,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w300,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : SizedBox(),
                   SizedBox(height: 20),
-                  profileNotifier.profileList[0].subTime != null
-                      ? _time()
-                      : Container(),
+                  _time(),
                 ],
               ),
             ),
@@ -427,163 +729,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Center(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(15.0),
-                                child: Stack(
-                                  children: [
-                                    Image.asset(
-                                      'assets/login.jpg',
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                    ),
-                                    Container(
-                                      width: 100,
-                                      height: 100,
-                                      child: FlatButton(
-                                        padding: EdgeInsets.all(16),
-                                        color: Colors.black26,
-                                        child: Icon(
-                                          Icons.camera_enhance,
-                                          size: 40,
-                                          color: Colors.white,
-                                        ),
-                                        onPressed: () => _getLocalImage(),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 32),
-                            _buildAddressField(),
+                            _basicOptions(),
                             SizedBox(height: 32),
                             _timePicker(),
                             SizedBox(height: 32),
-                            Text(
-                              'Настройка меню',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: t_primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Текущие языки',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: t_primary,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Stack(
-                              children: [
-                                Container(
-                                  height: 50,
-                                  margin: EdgeInsets.only(left: 50),
-                                  child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: _subLanguages.length,
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.all(5.5),
-                                          child: Container(
-                                            width: 45,
-                                            height: 45,
-                                            child: Image.asset(
-                                                'assets/${_subLanguages[index]}.png'),
-                                          ),
-                                        );
-                                      }),
-                                ),
-                                FloatingActionButton(
-                                  heroTag: 'price',
-                                  backgroundColor: c_secondary,
-                                  elevation: 0,
-                                  highlightElevation: 0,
-                                  mini: true,
-                                  onPressed: () =>
-                                      setState(() => isClicked = !isClicked),
-                                  child: Icon(isClicked
-                                      ? Icons.expand_less
-                                      : Icons.add),
-                                  foregroundColor: Colors.white,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            AnimatedContainer(
-                              duration: Duration(seconds: 1),
-                              curve: Curves.fastOutSlowIn,
-                              height: isClicked ? 50.0 : 0.0,
-                              padding: EdgeInsets.only(left: 8),
-                              child: ListView(
-                                padding: EdgeInsets.all(0.0),
-                                physics: NeverScrollableScrollPhysics(),
-                                children: [
-                                  DropdownButton<Item>(
-                                    isExpanded: true,
-                                    hint: Text(
-                                      "Дополнительный язык",
-                                      style: TextStyle(fontSize: 18),
-                                    ),
-                                    value: _selectedLanguage,
-                                    onChanged: (Item value) {
-                                      if (!_subLanguages
-                                          .contains(value.language)) {
-                                        if (_selectedLanguage != null) {
-                                          _subLanguages.removeLast();
-                                        }
-                                        setState(() {
-                                          _selectedLanguage = value;
-                                          _subLanguages
-                                              .add(_selectedLanguage.language);
-                                        });
-                                      }
-                                    },
-                                    items: languages.map((Item lang) {
-                                      return DropdownMenuItem<Item>(
-                                        value: lang,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: <Widget>[
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Container(
-                                                  width: 30,
-                                                  height: 30,
-                                                  child: Image.asset(
-                                                      'assets/${lang.icon}'),
-                                                ),
-                                                SizedBox(width: 15),
-                                                Text(
-                                                  lang.title,
-                                                  style: TextStyle(
-                                                      color: t_primary,
-                                                      fontSize: 18),
-                                                ),
-                                              ],
-                                            ),
-                                            _subLanguages
-                                                    .contains(lang.language)
-                                                ? Icon(Icons.check)
-                                                : SizedBox(),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            _setLanguage(),
+                            SizedBox(height: 32),
+                            _setGlobalSearch(),
                             SizedBox(height: 62),
                             Center(
                               child: FlatButton(
@@ -608,25 +760,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    _onProfileUploaded(Profile profile) {
-      Navigator.pop(context);
-    }
-
-    _editProfile() {
-      bool imageExist;
-      setState(() => _isUploading = !_isUploading);
-      profile.image != null ? imageExist = true : imageExist = false;
-      profile.subLanguages = _subLanguages;
-
-      editAddress(
-        profile,
-        authNotifier.user.uid,
-        imageExist,
-        _imageFile,
-        _onProfileUploaded,
-      );
-    }
-
     return Scaffold(
       body: Stack(
         children: [
@@ -637,7 +770,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 FloatingActionButtonLocation.centerFloat,
             floatingActionButton: FloatingActionButton.extended(
               backgroundColor: c_secondary,
-              onPressed: () => _editProfile(),
+              onPressed: () async {
+                setState(() => _isUploading = !_isUploading);
+                await _editProfile();
+                Navigator.pop(context);
+              },
               icon: Icon(Icons.save),
               label: Text(
                 'СОХРАНИТЬ',

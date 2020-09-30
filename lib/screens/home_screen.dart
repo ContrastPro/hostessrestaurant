@@ -55,8 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _saveCategory(String categoryText) {
-    /*addCategory(_categories, _onCategoryUploaded, _uid, _addressId, categoryText);*/
-
     addCategory(_categories, _uid, _addressId, _language, categoryText,
         _onCategoryUploaded);
   }
@@ -64,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
   _onCategoryUploaded(Categories categories) {
     CategoriesNotifier categoriesNotifier =
         Provider.of<CategoriesNotifier>(context, listen: false);
-    /*getCategories(categoriesNotifier, _uid, _addressId);*/
     getCategories(categoriesNotifier, _uid, _addressId, _language);
     Navigator.pop(context);
   }
@@ -334,6 +331,27 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    double _size() {
+      if (isClicked) {
+        switch (profileNotifier.profileList[0].subLanguages.length) {
+          case 1:
+            return 60.0;
+
+            break;
+          case 2:
+            return 100.0;
+
+            break;
+          default:
+            return 140.0;
+
+            break;
+        }
+      } else {
+        return 18.0;
+      }
+    }
+
     Widget _drawerHeader() {
       return _addressId != null
           ? Container(
@@ -399,26 +417,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: AnimatedContainer(
                                   duration: Duration(seconds: 1),
                                   curve: Curves.fastOutSlowIn,
-                                  height: 50,
-                                  width: isClicked
-                                      ? MediaQuery.of(context).size.width
-                                      : 25.0,
+                                  height: 36,
+                                  width: _size(),
                                   decoration: BoxDecoration(
-                                    color: c_background.withOpacity(0.6),
+                                    color: c_background.withOpacity(0.7),
                                     borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(30.0),
                                       bottomLeft: Radius.circular(30.0),
                                     ),
                                   ),
-                                  margin: EdgeInsets.only(right: 25),
+                                  margin: EdgeInsets.only(right: 18),
                                   child: ListView.builder(
-                                      padding: EdgeInsets.only(right: 35),
+                                      padding: EdgeInsets.only(right: 25),
                                       scrollDirection: Axis.horizontal,
                                       itemCount: profileNotifier
                                           .profileList[0].subLanguages.length,
                                       itemBuilder: (context, index) {
                                         return Padding(
-                                          padding: const EdgeInsets.all(8.0),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5),
                                           child: GestureDetector(
                                             onTap: () {
                                               setState(() {
@@ -435,8 +452,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               }
                                             },
                                             child: Container(
-                                              width: 35,
-                                              height: 35,
+                                              width: 28,
+                                              height: 28,
                                               child: Image.asset(
                                                   'assets/${profileNotifier.profileList[0].subLanguages[index]}.png'),
                                             ),
@@ -451,8 +468,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onTap: () =>
                                       setState(() => isClicked = !isClicked),
                                   child: Container(
-                                    width: 50,
-                                    height: 50,
+                                    width: 36,
+                                    height: 36,
                                     child: Image.asset('assets/$_language.png'),
                                   ),
                                 ),

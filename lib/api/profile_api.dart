@@ -52,8 +52,7 @@ addAddress(Profile profile, String uid, String title, String address,
   await documentRef.setData(profile.toMap());
 }
 
-editAddress(Profile profile, String uid, bool imageExist, File imageFile,
-    Function profileUploaded) async {
+editAddress(Profile profile, String uid, bool imageExist, File imageFile) async {
   CollectionReference foodRef = Firestore.instance.collection(uid);
 
   if (imageFile != null) {
@@ -86,7 +85,23 @@ editAddress(Profile profile, String uid, bool imageExist, File imageFile,
   profile.updatedAt = Timestamp.now();
 
   await foodRef.document(profile.id).updateData(profile.toMap());
-
-  profileUploaded(profile);
   print('edit profile with id: ${profile.id}');
+}
+
+addToGlobalSearch(GlobalProfile globalProfile) async {
+  CollectionReference globalSearch =
+      Firestore.instance.collection('Global_Search');
+
+  globalProfile.createdAt = Timestamp.now();
+
+  await globalSearch.document(globalProfile.id).setData(globalProfile.toMap());
+  print('uploaded to Global Search successfully: ${globalProfile.id}');
+}
+
+deleteFromGlobalSearch(GlobalProfile globalProfile) async {
+  await Firestore.instance
+      .collection('Global_Search')
+      .document(globalProfile.id)
+      .delete();
+  print('delete from Global Search successfully with id: ${globalProfile.id}');
 }
