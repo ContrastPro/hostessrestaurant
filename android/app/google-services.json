@@ -40,10 +40,10 @@
               "client_type": 3
             },
             {
-              "client_id": "402440327451-6jktfv8qjmvif25n0bp1f27pt88ops02.apps.googleusercontent.com",
+              "client_id": "402440327451-0o162mfvvbifcufsenm46h858pp8nhno.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.original.hostess"
+                "bundle_id": "com.original.hostessrestaurant"
               }
             }
           ]
@@ -76,10 +76,10 @@
               "client_type": 3
             },
             {
-              "client_id": "402440327451-6jktfv8qjmvif25n0bp1f27pt88ops02.apps.googleusercontent.com",
+              "client_id": "402440327451-0o162mfvvbifcufsenm46h858pp8nhno.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.original.hostess"
+                "bundle_id": "com.original.hostessrestaurant"
               }
             }
           ]

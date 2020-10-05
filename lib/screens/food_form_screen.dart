@@ -45,14 +45,12 @@ class _FoodFormState extends State<FoodForm> {
   final String language;
   final String category;
 
-  Food _currentFood;
+  bool _isUploading = false;
   String _imageUrlHigh, _imageUrlLow;
   File _imageFileHigh, _imageFileLow;
-  List _subIngredients = [];
   List _subPrice = [];
-  TextEditingController _subIngredientController = TextEditingController();
+  Food _currentFood;
   TextEditingController _subPriceController = TextEditingController();
-  bool _isUploading = false;
 
   @override
   void initState() {
@@ -64,7 +62,6 @@ class _FoodFormState extends State<FoodForm> {
       _currentFood = foodNotifier.currentFood;
       _imageUrlHigh = _currentFood.imageHigh;
       _imageUrlLow = _currentFood.imageLow;
-      _subIngredients.addAll(_currentFood.subIngredients);
       _subPrice.addAll(_currentFood.subPrice);
     } else {
       _currentFood = Food();
@@ -298,24 +295,6 @@ class _FoodFormState extends State<FoodForm> {
     );
   }
 
-  _buildIngredientField() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(right: 20),
-        child: TextField(
-          controller: _subIngredientController,
-          keyboardType: TextInputType.text,
-          maxLength: 30,
-          decoration: InputDecoration(
-            labelText: 'Ингредиенты',
-            prefixIcon: Icon(Icons.line_style),
-          ),
-          style: TextStyle(fontSize: 20),
-        ),
-      ),
-    );
-  }
-
   _buildPriceField() {
     return Expanded(
       child: Padding(
@@ -386,15 +365,6 @@ class _FoodFormState extends State<FoodForm> {
     Navigator.pop(context);
   }
 
-  _addSubIngredient(String text) {
-    if (text.isNotEmpty) {
-      setState(() {
-        _subIngredients.add(text);
-      });
-      _subIngredientController.clear();
-    }
-  }
-
   _addSubPrice(String text) {
     if (text.isNotEmpty) {
       setState(() {
@@ -405,7 +375,6 @@ class _FoodFormState extends State<FoodForm> {
   }
 
   _addFood() {
-    _currentFood.subIngredients = _subIngredients;
     _currentFood.subPrice = _subPrice;
 
     if (_currentFood.subPrice.isNotEmpty) {
@@ -422,7 +391,6 @@ class _FoodFormState extends State<FoodForm> {
   }
 
   _editFood() {
-    _currentFood.subIngredients = _subIngredients;
     _currentFood.subPrice = _subPrice;
 
     bool imageExist;
@@ -443,6 +411,7 @@ class _FoodFormState extends State<FoodForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: <Widget>[
           _showImageHigh(),
@@ -508,7 +477,7 @@ class _FoodFormState extends State<FoodForm> {
                             children: <Widget>[
                               _buildPriceField(),
                               FloatingActionButton(
-                                heroTag: 'price',
+                                heroTag: UniqueKey(),
                                 backgroundColor: c_primary,
                                 elevation: 0,
                                 highlightElevation: 0,
@@ -524,30 +493,6 @@ class _FoodFormState extends State<FoodForm> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Wrap(children: _buildListPrice()),
-                          ),
-                          SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: <Widget>[
-                              _buildIngredientField(),
-                              FloatingActionButton(
-                                heroTag: 'ingredients',
-                                backgroundColor: c_primary,
-                                elevation: 0,
-                                highlightElevation: 0,
-                                mini: true,
-                                onPressed: () => _addSubIngredient(
-                                    _subIngredientController.text),
-                                child: Icon(Icons.add),
-                                foregroundColor: Colors.white,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Wrap(children: _buildListIngredients()),
                           ),
                           SizedBox(height: 100),
                         ]),
@@ -620,55 +565,21 @@ class _FoodFormState extends State<FoodForm> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: c_secondary,
-        onPressed: () {
-          isUpdating != true ? _addFood() : _editFood();
-        },
-        icon: Icon(isUpdating != true ? Icons.create : Icons.save),
-        label: Text(
-          isUpdating != true ? "ОПУБЛИКОВАТЬ" : "СОХРАНИТЬ",
-          style: TextStyle(color: Colors.white),
-        ),
-        foregroundColor: Colors.white,
-      ),
-    );
-  }
-
-  _buildListIngredients() {
-    List<Widget> choices = List();
-
-    _subIngredients.forEach((ingredient) {
-      choices.add(
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 1.0),
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Chip(
-            backgroundColor: c_primary.withOpacity(0.2),
-            elevation: 0,
-            label: Text(
-              ingredient,
-              style: TextStyle(
-                fontSize: 16,
-                color: t_primary,
-                fontWeight: FontWeight.w400,
+      floatingActionButton: MediaQuery.of(context).viewInsets.bottom == 0
+          ? FloatingActionButton.extended(
+              backgroundColor: c_secondary,
+              onPressed: () {
+                isUpdating != true ? _addFood() : _editFood();
+              },
+              icon: Icon(isUpdating != true ? Icons.create : Icons.save),
+              label: Text(
+                isUpdating != true ? "ОПУБЛИКОВАТЬ" : "СОХРАНИТЬ",
+                style: TextStyle(color: Colors.white),
               ),
-            ),
-            deleteIcon: Icon(
-              Icons.cancel,
-              color: Colors.red[900],
-            ),
-            onDeleted: () {
-              setState(() {
-                _subIngredients.remove(ingredient);
-              });
-              _subIngredientController.clear();
-            },
-          ),
-        ),
-      );
-    });
-    return choices;
+              foregroundColor: Colors.white,
+            )
+          : SizedBox(),
+    );
   }
 
   _buildListPrice() {

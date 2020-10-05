@@ -49,75 +49,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
   }
 
-  _showImageHigh() {
-    if (_imageFile == null && _imageUrl == null) {
-      return Image.asset(
-        'assets/login.jpg',
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    } else if (_imageFile != null) {
-      return Image.file(
-        _imageFile,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    } else if (_imageUrl != null) {
-      return Container(
-        width: double.infinity,
-        color: c_background,
-        height: double.infinity,
-        child: CachedNetworkImage(
-          imageUrl: _imageUrl,
-          fit: BoxFit.cover,
-          progressIndicatorBuilder: (context, url, downloadProgress) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: CircularProgressIndicator(
-                  value: downloadProgress.progress,
-                  strokeWidth: 10,
-                ),
-              ),
-            );
-          },
-          errorWidget: (context, url, error) => Icon(Icons.error),
-        ),
-      );
-    }
-  }
-
-  Future<void> _getLocalImage() async {
-    final picker = ImagePicker();
-
-    ///Get Image
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
-
-    if (pickedFile.path != null) {
-      setState(() => _imageFile = File(pickedFile.path));
-    }
-
-    /// Crop Image
-    File croppedHigh = await ImageCropper.cropImage(
-      sourcePath: _imageFile.path,
-      maxWidth: 735,
-      maxHeight: 1102,
-      compressQuality: 80,
-      aspectRatioPresets: [CropAspectRatioPreset.ratio16x9],
-    );
-
-    setState(() => _imageFile = croppedHigh ?? _imageFile);
-  }
-
   @override
   Widget build(BuildContext context) {
     ProfileNotifier profileNotifier = Provider.of<ProfileNotifier>(context);
     AuthNotifier authNotifier = Provider.of<AuthNotifier>(context);
 
-    Widget _time() {
+    Future<void> _getLocalImage() async {
+      final picker = ImagePicker();
+
+      ///Get Image
+      final pickedFile = await picker.getImage(source: ImageSource.gallery);
+
+      if (pickedFile.path != null) {
+        setState(() => _imageFile = File(pickedFile.path));
+      }
+
+      /// Crop Image
+      File croppedHigh = await ImageCropper.cropImage(
+        sourcePath: _imageFile.path,
+        maxWidth: 735,
+        maxHeight: 1102,
+        compressQuality: 80,
+        aspectRatioPresets: [CropAspectRatioPreset.ratio16x9],
+      );
+
+      setState(() => _imageFile = croppedHigh ?? _imageFile);
+    }
+
+    Future<List<String>> _createSearchKey(String key) async {
+      List<String> indexList = [];
+      List<String> splitList = key.split(" ");
+
+      for (int i = 0; i < splitList.length; i++) {
+        for (int y = 1; y < splitList[i].length + 1; y++) {
+          indexList.add(splitList[i].substring(0, y).toLowerCase());
+        }
+      }
+      return indexList;
+    }
+
+    _editProfile() async {
+      bool imageExist;
+      profile.image != null ? imageExist = true : imageExist = false;
+      profile.subLanguages = _subLanguages;
+      profile.globalSearch = _globalSearch;
+      await editAddress(
+        profile,
+        authNotifier.user.uid,
+        imageExist,
+        _imageFile,
+      );
+      setState(() => _isUploading = !_isUploading);
+    }
+
+    _addToGlobalSearch() async {
+      GlobalProfile globalProfile = GlobalProfile();
+      globalProfile.id = authNotifier.user.uid + "#" + profile.id;
+      if (_globalSearch == true) {
+        globalProfile.title = profile.title;
+        globalProfile.address = profile.address;
+        globalProfile.subSearchKey = await _createSearchKey(profile.title);
+        await addToGlobalSearch(globalProfile);
+        _editProfile();
+      } else {
+        await deleteFromGlobalSearch(globalProfile);
+        _editProfile();
+      }
+    }
+
+    _setImageHigh() {
+      if (_imageFile == null && _imageUrl == null) {
+        return Image.asset(
+          'assets/login.jpg',
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else if (_imageFile != null) {
+        return Image.file(
+          _imageFile,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else if (_imageUrl != null) {
+        return Container(
+          width: double.infinity,
+          color: c_background,
+          height: double.infinity,
+          child: CachedNetworkImage(
+            imageUrl: _imageUrl,
+            fit: BoxFit.cover,
+            progressIndicatorBuilder: (context, url, downloadProgress) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: CircularProgressIndicator(
+                    value: downloadProgress.progress,
+                    strokeWidth: 10,
+                  ),
+                ),
+              );
+            },
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          ),
+        );
+      }
+    }
+
+    Widget _setTime() {
       DateTime date = DateTime.now();
       return Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -141,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    Widget _basicOptions() {
+    Widget _setBasicOptions() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -195,11 +236,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(fontSize: 20, color: t_primary),
             validator: (String value) {
               if (value.isEmpty) {
-                return 'Название обязательно!';
+                return 'Адрес обязательно!';
               }
 
-              if (value.length < 3) {
-                return 'Слишком короткое Название';
+              if (value.length < 10) {
+                return 'Слишком короткий Адрес';
               }
 
               return null;
@@ -226,7 +267,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    Widget _timePicker() {
+    Widget _timeItem(String day, int index) {
+      return TextFormField(
+        decoration: InputDecoration(labelText: day),
+        maxLength: 13,
+        maxLines: 1,
+        initialValue: profile.subTime[index],
+        keyboardType: TextInputType.datetime,
+        style: TextStyle(fontSize: 18, color: t_primary),
+        onChanged: (String value) {
+          profile.subTime[index] = value;
+        },
+      );
+    }
+
+    Widget _setTimeList() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -246,196 +301,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.normal,
             ),
           ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Понедельник'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[0],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[0] = value;
-                  },
-                ),
-              ),
-              SizedBox(width: 20),
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Вторник'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[1],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[1] = value;
-                  },
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Среда'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[2],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[2] = value;
-                  },
-                ),
-              ),
-              SizedBox(width: 20),
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Четверг'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[3],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[3] = value;
-                  },
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Пятница'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[4],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[4] = value;
-                  },
-                ),
-              ),
-              SizedBox(width: 20),
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Суббота'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[5],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[5] = value;
-                  },
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Воскресенье'),
-                  maxLength: 13,
-                  maxLines: 1,
-                  initialValue: profile.subTime[6],
-                  keyboardType: TextInputType.datetime,
-                  style: TextStyle(fontSize: 18, color: t_primary),
-                  validator: (String value) {
-                    if (value.isEmpty) {
-                      return 'Время обязательно!';
-                    }
-
-                    if (value.length < 13) {
-                      return 'Неверный формат';
-                    }
-
-                    return null;
-                  },
-                  onChanged: (String value) {
-                    profile.subTime[6] = value;
-                  },
-                ),
-              ),
-              Expanded(
-                  child: Container(
-                width: double.infinity,
-              )),
+          GridView.count(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 16,
+            crossAxisCount: 2,
+            childAspectRatio: 1.8,
+            padding: const EdgeInsets.only(top: 16),
+            children: <Widget>[
+              _timeItem('Понедельник', 0),
+              _timeItem('Вторник', 1),
+              _timeItem('Среда', 2),
+              _timeItem('Четверг', 3),
+              _timeItem('Пятница', 4),
+              _timeItem('Суббота', 5),
+              _timeItem('Воскресенье', 6),
             ],
           ),
         ],
@@ -477,8 +357,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Container(
                           width: 45,
                           height: 45,
-                          child:
-                              Image.asset('assets/${_subLanguages[index]}.png'),
+                          child: Image.asset(
+                              'assets/languages/${_subLanguages[index]}.png'),
                         ),
                       );
                     }),
@@ -535,7 +415,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 width: 30,
                                 height: 30,
-                                child: Image.asset('assets/${lang.icon}'),
+                                child: Image.asset(
+                                    'assets/languages/${lang.icon}'),
                               ),
                               SizedBox(width: 15),
                               Text(
@@ -560,35 +441,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    _editProfile() async {
-      bool imageExist;
-      profile.image != null ? imageExist = true : imageExist = false;
-      profile.subLanguages = _subLanguages;
-      profile.globalSearch = _globalSearch;
-      await editAddress(
-        profile,
-        authNotifier.user.uid,
-        imageExist,
-        _imageFile,
-      );
-      setState(() => _isUploading = !_isUploading);
-    }
-
-    _addToGlobalSearch() async {
-      GlobalProfile globalProfile = GlobalProfile();
-      globalProfile.id = profile.id;
-      if (_globalSearch == true) {
-        globalProfile.globalId = authNotifier.user.uid + "#" + profile.id;
-        globalProfile.title = profile.title;
-        globalProfile.address = profile.address;
-        await addToGlobalSearch(globalProfile);
-        _editProfile();
-      } else {
-        await deleteFromGlobalSearch(globalProfile);
-        _editProfile();
-      }
-    }
-
     Widget _setGlobalSearch() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,19 +462,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Checkbox(
-                value: _globalSearch,
-                onChanged: (bool value) async {
-                  setState(() => _globalSearch = !_globalSearch);
-                  _addToGlobalSearch();
-                  setState(() => _isUploading = !_isUploading);
-                },
-              ),
-              Text("Отображать в глобальном поиске"),
-            ],
+          CheckboxListTile(
+            contentPadding: EdgeInsets.all(0),
+            title: const Text('Отображать в глобальном поиске'),
+            value: _globalSearch,
+            onChanged: (bool value) {
+              setState(() => _globalSearch = !_globalSearch);
+              _addToGlobalSearch();
+              setState(() => _isUploading = !_isUploading);
+            },
           ),
         ],
       );
@@ -631,7 +479,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Widget _homeScreen() {
       return Stack(
         children: <Widget>[
-          _showImageHigh(),
+          _setImageHigh(),
           Container(
             width: MediaQuery.of(context).size.width * 0.55,
             height: double.infinity,
@@ -702,7 +550,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       : SizedBox(),
                   SizedBox(height: 20),
-                  _time(),
+                  _setTime(),
                 ],
               ),
             ),
@@ -710,7 +558,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           DraggableScrollableSheet(
               initialChildSize: 0.55,
               maxChildSize: 0.80,
-              minChildSize: 0.25,
+              minChildSize: 0.20,
               builder: (context, scrollController) {
                 return Container(
                   decoration: BoxDecoration(
@@ -724,35 +572,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: scrollController,
                     padding:
                         EdgeInsets.symmetric(horizontal: 30.0, vertical: 35.0),
-                    child: Form(
-                      autovalidate: true,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _basicOptions(),
-                            SizedBox(height: 32),
-                            _timePicker(),
-                            SizedBox(height: 32),
-                            _setLanguage(),
-                            SizedBox(height: 32),
-                            _setGlobalSearch(),
-                            SizedBox(height: 62),
-                            Center(
-                              child: FlatButton(
-                                onPressed: () {
-                                  signOut(authNotifier);
-                                  Navigator.pop(context);
-                                },
-                                child: Text(
-                                  "Выйти из аккаунта",
-                                  style: TextStyle(
-                                      fontSize: 20, color: Colors.redAccent),
-                                ),
-                              ),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _setBasicOptions(),
+                          SizedBox(height: 32),
+                          _setTimeList(),
+                          SizedBox(height: 32),
+                          _setLanguage(),
+                          SizedBox(height: 32),
+                          _setGlobalSearch(),
+                          SizedBox(height: 62),
+                          Center(
+                            child: RaisedButton(
+                              onPressed: () {
+                                signOut(authNotifier);
+                                Navigator.pop(context);
+                              },
+                              color: Colors.red,
+                              textColor: Colors.white,
+                              child: const Text('Выйти из аккаунта'),
                             ),
-                            SizedBox(height: 62),
-                          ]),
-                    ),
+                          ),
+                          SizedBox(height: 82),
+                        ]),
                   ),
                 );
               }),
@@ -761,27 +604,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           Scaffold(
+            resizeToAvoidBottomInset: false,
             backgroundColor: Colors.transparent,
             body: _homeScreen(),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerFloat,
-            floatingActionButton: FloatingActionButton.extended(
-              backgroundColor: c_secondary,
-              onPressed: () async {
-                setState(() => _isUploading = !_isUploading);
-                await _editProfile();
-                Navigator.pop(context);
-              },
-              icon: Icon(Icons.save),
-              label: Text(
-                'СОХРАНИТЬ',
-                style: TextStyle(color: Colors.white),
-              ),
-              foregroundColor: Colors.white,
-            ),
+            floatingActionButton: MediaQuery.of(context).viewInsets.bottom == 0
+                ? FloatingActionButton.extended(
+                    heroTag: UniqueKey(),
+                    backgroundColor: c_secondary,
+                    onPressed: () async {
+                      setState(() => _isUploading = !_isUploading);
+                      await _editProfile();
+                      Navigator.pop(context);
+                    },
+                    icon: Icon(Icons.save),
+                    label: Text(
+                      'СОХРАНИТЬ',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    foregroundColor: Colors.white,
+                  )
+                : SizedBox(),
           ),
           SafeArea(
             child: Padding(

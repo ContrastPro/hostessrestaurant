@@ -24,7 +24,7 @@ getCategories(CategoriesNotifier categoriesNotifier, String uid, String address,
 }
 
 addCategory(Categories categories, String uid, String address, String language,
-    String category, Function categoriesUploaded) async {
+    String category) async {
   CollectionReference categoryRef = Firestore.instance
       .collection(uid)
       .document(address)
@@ -43,12 +43,10 @@ addCategory(Categories categories, String uid, String address, String language,
   print('uploaded category successfully: ${categories.id}');
 
   await documentRef.setData(categories.toMap(), merge: true);
-
-  categoriesUploaded(categories);
 }
 
 deleteCategory(Categories categories, String uid, String address,
-    String language, Function categoriesDeleted) async {
+    String language) async {
   await Firestore.instance
       .collection(uid)
       .document(address)
@@ -57,8 +55,6 @@ deleteCategory(Categories categories, String uid, String address,
       .collection('Menu')
       .document(categories.id)
       .delete();
-
-  categoriesDeleted(categories);
 
   print('delete categories successfully with id: ${categories.id}');
 }

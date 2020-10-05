@@ -6,7 +6,6 @@ class Food {
   String description;
   String imageHigh;
   String imageLow;
-  List subIngredients = [];
   List subPrice = [];
   Timestamp createdAt;
   Timestamp updatedAt;
@@ -19,7 +18,6 @@ class Food {
     description = data['description'];
     imageHigh = data['imageHigh'];
     imageLow = data['imageLow'];
-    subIngredients = data['subIngredients'];
     subPrice = data['subPrice'];
     createdAt = data['createdAt'];
     updatedAt = data['updatedAt'];
@@ -32,7 +30,6 @@ class Food {
       'description': description,
       'imageHigh': imageHigh,
       'imageLow': imageLow,
-      'subIngredients': subIngredients,
       'subPrice': subPrice,
       'createdAt': createdAt,
       'updatedAt': updatedAt

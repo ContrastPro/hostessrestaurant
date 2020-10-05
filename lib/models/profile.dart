@@ -45,27 +45,27 @@ class Profile {
 
 class GlobalProfile {
   String id;
-  String globalId;
   String title;
   String address;
+  List subSearchKey = [];
   Timestamp createdAt;
 
   GlobalProfile();
 
   GlobalProfile.fromMap(Map<String, dynamic> data) {
     id = data['id'];
-    globalId = data['globalId'];
     title = data['title'];
     address = data['address'];
+    subSearchKey = data['subSearchKey'];
     createdAt = data['createdAt'];
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'globalId': globalId,
       'title': title,
       'address': address,
+      'subSearchKey': subSearchKey,
       'createdAt': createdAt,
     };
   }

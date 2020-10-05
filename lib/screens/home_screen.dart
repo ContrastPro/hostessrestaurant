@@ -25,8 +25,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Categories _categories;
   Item _selectedLanguage;
-  TextEditingController _categoryController = TextEditingController();
-  TextEditingController _addressController = TextEditingController();
+  TextEditingController _categoryController;
+  TextEditingController _addressController;
 
   String _uid;
   String _addressId;
@@ -34,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _language;
   int _selectedIndex = 0;
   bool _addAddress = false;
-  bool isClicked = false;
   List _subLanguages = [];
 
   @override
@@ -43,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Provider.of<AuthNotifier>(context, listen: false);
     setState(() => _uid = authNotifier.user.uid);
     _categories = Categories();
+    _categoryController = TextEditingController();
+    _addressController = TextEditingController();
     super.initState();
   }
 
@@ -52,50 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _onSelected(int index) {
     setState(() => _selectedIndex = index);
-  }
-
-  _saveCategory(String categoryText) {
-    addCategory(_categories, _uid, _addressId, _language, categoryText,
-        _onCategoryUploaded);
-  }
-
-  _onCategoryUploaded(Categories categories) {
-    CategoriesNotifier categoriesNotifier =
-        Provider.of<CategoriesNotifier>(context, listen: false);
-    getCategories(categoriesNotifier, _uid, _addressId, _language);
-    Navigator.pop(context);
-  }
-
-  _addCategoryDialog() {
-    Widget okButton = FlatButton(
-      child: Text("Создать"),
-      onPressed: () => {
-        if (_categoryController.text.trim().length > 1)
-          {_saveCategory(_categoryController.text.trim())}
-      },
-    );
-    Widget cancelButton = FlatButton(
-      child: Text("Отмена"),
-      onPressed: () => Navigator.pop(context),
-    );
-    AlertDialog alert = AlertDialog(
-      title: Text('Введите новую категорию'),
-      content: TextField(
-        controller: _categoryController,
-        maxLength: 50,
-        maxLines: 1,
-        keyboardType: TextInputType.text,
-        style: TextStyle(fontSize: 20, color: t_primary),
-        decoration: InputDecoration(labelText: 'Название'),
-      ),
-      actions: [cancelButton, okButton],
-    );
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
   }
 
   @override
@@ -110,93 +67,195 @@ class _HomeScreenState extends State<HomeScreen> {
       getFoods(foodNotifier, _uid, _addressId, _language, category);
     }
 
-    _showCreateDialog() {
-      Widget okButton = FlatButton(
-        child: Text("Категорию"),
-        onPressed: () {
-          Navigator.pop(context);
-          _addCategoryDialog();
-        },
-      );
-      Widget cancelButton = FlatButton(
-        child: Text("Блюдо"),
-        onPressed: () async {
-          Navigator.pop(context);
-          if (_selectedIndex == 0) {
-            _setCategory(categoriesNotifier.categoriesList[0].title);
-          }
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FoodForm(
-                isUpdating: false,
-                uid: _uid,
-                address: _addressId,
-                language: _language,
-                category: _category,
-              ),
-            ),
-          );
-          _refreshList(categoriesNotifier.categoriesList[_selectedIndex].title);
-        },
-      );
-      AlertDialog alert = AlertDialog(
-        title: Text('Что бы вы хотели добавить?'),
-        actions: [
-          okButton,
-          categoriesNotifier.categoriesList.isNotEmpty
-              ? cancelButton
-              : SizedBox()
-        ],
-      );
+    String _titleLanguage(String subLanguages) {
+      switch (subLanguages) {
+        case "ru":
+          return "Русский";
+
+          break;
+
+        case "ua":
+          return "Українська";
+
+          break;
+
+        default:
+          return "English";
+
+          break;
+      }
+    }
+
+    _showLanguageDialog() {
       showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return alert;
-        },
-      );
+          context: context,
+          builder: (context) {
+            return SimpleDialog(
+              title: Text('Доступные языки'),
+              children: <Widget>[
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  margin: EdgeInsets.symmetric(horizontal: 5.0),
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount:
+                          profileNotifier.profileList[0].subLanguages.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          onTap: () {
+                            setState(() {
+                              _language = profileNotifier
+                                  .profileList[0].subLanguages[index];
+                            });
+                            getCategories(categoriesNotifier, _uid, _addressId,
+                                _language);
+                            Navigator.pop(context);
+                          },
+                          leading: Container(
+                            width: 30,
+                            height: 30,
+                            child: Image.asset(
+                                'assets/languages/${profileNotifier.profileList[0].subLanguages[index]}.png'),
+                          ),
+                          title: Text(
+                            _titleLanguage(profileNotifier
+                                .profileList[0].subLanguages[index]),
+                          ),
+                        );
+                      }),
+                ),
+              ],
+            );
+          });
     }
 
-    Widget _chip(int index) {
-      return GestureDetector(
-        child: FilterChip(
-          padding: EdgeInsets.symmetric(horizontal: 8.0),
-          label: Text(
-            categoriesNotifier.categoriesList[index].title,
-            style: TextStyle(
-              fontSize: 16.0,
-              color: _selectedIndex != null && _selectedIndex == index
-                  ? c_background
-                  : t_primary.withOpacity(0.4),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          backgroundColor: _selectedIndex != null && _selectedIndex == index
-              ? c_secondary
-              : Colors.white.withOpacity(0),
-          elevation: 0.0,
-          pressElevation: 0.0,
-          onSelected: (bool value) {
-            _onSelected(index);
-            if (_selectedIndex != 0) {
-              _refreshList(categoriesNotifier.categoriesList[index].title);
-              _setCategory(categoriesNotifier.categoriesList[index].title);
-            }
-          },
-        ),
-      );
-    }
-
-    Widget _price(subPrice) {
+    String _parsePrice(subPrice) {
       List<String> splitRes = subPrice.split('#');
       String splitPrice = splitRes[1];
-      return Text(
-        splitPrice,
-        style: TextStyle(
-          color: t_primary,
-          fontSize: 18.0,
-          fontWeight: FontWeight.bold,
+      return splitPrice;
+    }
+
+    _saveCategory(String categoryText) async {
+      await addCategory(_categories, _uid, _addressId, _language, categoryText);
+      getCategories(categoriesNotifier, _uid, _addressId, _language);
+      Navigator.pop(context);
+    }
+
+    _addCategoryDialog() {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return SimpleDialog(
+              title: Text("Введите новую категорию"),
+              titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0.0),
+              contentPadding: EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 10.0),
+              children: <Widget>[
+                TextField(
+                  controller: _categoryController,
+                  maxLength: 50,
+                  maxLines: 1,
+                  keyboardType: TextInputType.text,
+                  style: TextStyle(fontSize: 16, color: t_primary),
+                  decoration: InputDecoration(labelText: 'Название'),
+                ),
+                SizedBox(height: 16),
+                FlatButton(
+                  color: c_secondary,
+                  textColor: Colors.white,
+                  child: Text("Создать"),
+                  onPressed: () {
+                    if (_categoryController.text.trim().length > 1) {
+                      _saveCategory(_categoryController.text.trim());
+                      _categoryController.clear();
+                    }
+                  },
+                )
+              ],
+            );
+          });
+    }
+
+    _showCreateDialog() {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return SimpleDialog(
+              title: Text("Что бы вы хотели добавить?"),
+              titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0.0),
+              contentPadding: EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 10.0),
+              children: <Widget>[
+                SizedBox(height: 16),
+                ButtonBar(
+                  alignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    OutlineButton(
+                      child: Text('Категорию'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _addCategoryDialog();
+                      },
+                    ),
+                    categoriesNotifier.categoriesList.isNotEmpty
+                        ? FlatButton(
+                            color: c_secondary,
+                            child: Text('Блюдо'),
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              if (_selectedIndex == 0) {
+                                _setCategory(
+                                    categoriesNotifier.categoriesList[0].title);
+                              }
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FoodForm(
+                                    isUpdating: false,
+                                    uid: _uid,
+                                    address: _addressId,
+                                    language: _language,
+                                    category: _category,
+                                  ),
+                                ),
+                              );
+                              _refreshList(categoriesNotifier
+                                  .categoriesList[_selectedIndex].title);
+                            },
+                          )
+                        : SizedBox(),
+                  ],
+                ),
+              ],
+            );
+          });
+    }
+
+    Widget _chipItem(int index) {
+      return FilterChip(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        label: Text(
+          categoriesNotifier.categoriesList[index].title,
+          style: TextStyle(
+            fontSize: 16.0,
+            color: _selectedIndex != null && _selectedIndex == index
+                ? c_background
+                : t_primary.withOpacity(0.4),
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        backgroundColor: _selectedIndex != null && _selectedIndex == index
+            ? c_secondary
+            : Colors.white.withOpacity(0),
+        elevation:
+            _selectedIndex != null && _selectedIndex == index ? 0.0 : 2.0,
+        pressElevation: 0.0,
+        onSelected: (bool value) {
+          _onSelected(index);
+          if (_selectedIndex != 0) {
+            _refreshList(categoriesNotifier.categoriesList[index].title);
+            _setCategory(categoriesNotifier.categoriesList[index].title);
+          }
+        },
       );
     }
 
@@ -266,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   errorWidget: (context, url, error) =>
                                       Icon(Icons.error),
                                 )
-                              : Image.asset('assets/placeholder_1024.png',
+                              : Image.asset('assets/placeholder_200.png',
                                   fit: BoxFit.cover),
                         ),
                       ),
@@ -317,7 +376,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             SizedBox(width: 2),
-                            _price(foodNotifier.foodList[index].subPrice[0]),
+                            Text(
+                              _parsePrice(
+                                  foodNotifier.foodList[index].subPrice[0]),
+                              style: TextStyle(
+                                color: t_primary,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
                           ],
                         ),
                       ),
@@ -329,27 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       );
-    }
-
-    double _size() {
-      if (isClicked) {
-        switch (profileNotifier.profileList[0].subLanguages.length) {
-          case 1:
-            return 60.0;
-
-            break;
-          case 2:
-            return 100.0;
-
-            break;
-          default:
-            return 140.0;
-
-            break;
-        }
-      } else {
-        return 18.0;
-      }
     }
 
     Widget _drawerHeader() {
@@ -374,7 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: CircularProgressIndicator(
                                   backgroundColor: Colors.white,
                                   value: downloadProgress.progress,
-                                  strokeWidth: 10,
+                                  strokeWidth: 6,
                                 ),
                               );
                             },
@@ -403,124 +449,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         )
                       : SizedBox(),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 16.0, right: 10, bottom: 20.0),
-                    child: SafeArea(
-                      child: Stack(
-                        children: [
-                          Stack(
-                            alignment: Alignment.topCenter,
-                            children: [
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: AnimatedContainer(
-                                  duration: Duration(seconds: 1),
-                                  curve: Curves.fastOutSlowIn,
-                                  height: 36,
-                                  width: _size(),
-                                  decoration: BoxDecoration(
-                                    color: c_background.withOpacity(0.7),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(30.0),
-                                      bottomLeft: Radius.circular(30.0),
-                                    ),
-                                  ),
-                                  margin: EdgeInsets.only(right: 18),
-                                  child: ListView.builder(
-                                      padding: EdgeInsets.only(right: 25),
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: profileNotifier
-                                          .profileList[0].subLanguages.length,
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 5),
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _language = profileNotifier
-                                                    .profileList[0]
-                                                    .subLanguages[index];
-                                                isClicked = !isClicked;
-                                              });
-                                              getCategories(categoriesNotifier,
-                                                  _uid, _addressId, _language);
-                                              if (_addAddress == true) {
-                                                setState(() =>
-                                                    _addAddress = !_addAddress);
-                                              }
-                                            },
-                                            child: Container(
-                                              width: 28,
-                                              height: 28,
-                                              child: Image.asset(
-                                                  'assets/${profileNotifier.profileList[0].subLanguages[index]}.png'),
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => isClicked = !isClicked),
-                                  child: Container(
-                                    width: 36,
-                                    height: 36,
-                                    child: Image.asset('assets/$_language.png'),
-                                  ),
-                                ),
-                              ),
-                            ],
+                  SafeArea(
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: ListTile(
+                        title: Text(
+                          authNotifier.user.displayName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    authNotifier.user.displayName,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  profileNotifier.profileList.isNotEmpty
-                                      ? Text(
-                                          profileNotifier
-                                              .profileList[0].address,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.normal,
-                                          ),
-                                        )
-                                      : SizedBox(),
-                                ],
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.edit),
-                                color: Colors.white,
-                                onPressed: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ProfileScreen(),
-                                    ),
-                                  );
-                                  getProfile(profileNotifier, _uid, _addressId);
-                                },
-                              ),
-                            ],
+                        ),
+                        subtitle: Text(
+                          profileNotifier.profileList[0].address,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.normal,
                           ),
-                        ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.edit),
+                          color: Colors.white,
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileScreen(),
+                              ),
+                            );
+                            getProfile(profileNotifier, _uid, _addressId);
+                          },
+                        ),
                       ),
                     ),
                   )
@@ -530,32 +491,21 @@ class _HomeScreenState extends State<HomeScreen> {
           : Container(
               color: c_primary,
               child: SafeArea(
-                child: Container(
-                  width: double.infinity,
-                  height: 100,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16.0, bottom: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          authNotifier.user.displayName,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Выберите адрес',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        )
-                      ],
+                child: ListTile(
+                  title: Text(
+                    authNotifier.user.displayName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Выберите адрес',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ),
@@ -587,15 +537,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor:
-          foodNotifier.foodList.isNotEmpty ? c_background : Colors.white,
-      appBar: AppBar(
-        backgroundColor: c_primary,
-        title: Text(_addAddress == false ? 'Меню' : 'Новый адрес'),
-        centerTitle: true,
-      ),
-      drawer: Drawer(
+    Widget _setDrover() {
+      return Drawer(
         child: Column(
           children: [
             _drawerHeader(),
@@ -612,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!snapshot.hasData) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 50),
-                    child: CircularProgressIndicator(strokeWidth: 10),
+                    child: CircularProgressIndicator(strokeWidth: 6),
                   );
                 }
 
@@ -642,8 +585,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-      body: CustomScrollView(
+      );
+    }
+
+    Widget _setHomePage() {
+      return CustomScrollView(
         slivers: <Widget>[
           SliverList(
             delegate: SliverChildListDelegate(
@@ -667,11 +613,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }
                                   return Padding(
                                     padding: EdgeInsets.all(5.0),
-                                    child: _chip(index),
+                                    child: _chipItem(index),
                                   );
                                 }),
                           ),
-                          foodNotifier.foodList.isNotEmpty
+                          categoriesNotifier.categoriesList.isNotEmpty
                               ? _setMenu()
                               : Column(
                                   children: [
@@ -685,10 +631,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 10.0),
                                       child: Text(
-                                        categoriesNotifier
-                                                .categoriesList.isEmpty
-                                            ? 'Меню слишком пустое'
-                                            : 'Категория пустует',
+                                        profileNotifier.profileList.isNotEmpty
+                                            ? categoriesNotifier
+                                                    .categoriesList.isEmpty
+                                                ? 'Меню слишком пустое'
+                                                : 'Категория пустует'
+                                            : "Адрес не выбран",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: t_primary,
@@ -702,10 +650,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: const EdgeInsets.fromLTRB(
                                           20.0, 10.0, 20.0, 0.0),
                                       child: Text(
-                                        categoriesNotifier
-                                                .categoriesList.isEmpty
-                                            ? 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить категорию.'
-                                            : 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить блюдо.',
+                                        profileNotifier.profileList.isNotEmpty
+                                            ? categoriesNotifier
+                                                    .categoriesList.isEmpty
+                                                ? 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить категорию.'
+                                                : 'Похоже вы еще ничего не добавили. Давайте это исправим! Попробуйте добавить блюдо.'
+                                            : "Чтобы начать редактировать меню, выберите необходимый адрес",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: Colors.black38,
@@ -772,8 +722,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: <Widget>[
                                       CircleAvatar(
                                         radius: 12,
-                                        backgroundImage:
-                                            AssetImage('assets/${lang.icon}'),
+                                        backgroundImage: AssetImage(
+                                            'assets/languages/${lang.icon}'),
                                       ),
                                       SizedBox(width: 10),
                                       Text(
@@ -825,7 +775,43 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           )
         ],
+      );
+    }
+
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor:
+          foodNotifier.foodList.isNotEmpty ? c_background : Colors.white,
+      appBar: AppBar(
+        backgroundColor: c_primary,
+        title: Text(_addAddress == false ? 'Меню' : 'Новый адрес'),
+        centerTitle: true,
+        actions: [
+          _language != null && _addAddress != true
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 20.0),
+                  child: GestureDetector(
+                    onTap: () => _showLanguageDialog(),
+                    child: CircleAvatar(
+                      maxRadius: 18,
+                      minRadius: 18,
+                      child: Text(
+                        '$_language'.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 14.0,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      backgroundColor: Colors.deepOrange[900],
+                    ),
+                  ),
+                )
+              : SizedBox(),
+        ],
       ),
+      drawer: _setDrover(),
+      body: _setHomePage(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _addAddress != true
           ? Visibility(
