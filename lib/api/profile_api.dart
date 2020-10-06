@@ -30,6 +30,8 @@ addAddress(Profile profile, String uid, String title, String address,
 
   profile.title = title;
   profile.address = address;
+  profile.phone = "";
+  profile.globalSearch = false;
   profile.subTime = [
     "00:00 - 24:00",
     "00:00 - 24:00",

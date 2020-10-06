@@ -39,24 +39,6 @@ class _LoginState extends State<Login> {
     super.initState();
   }
 
-  void _submitForm() {
-    if (!_formKey.currentState.validate()) {
-      return;
-    }
-    setState(() => _enter = !_enter);
-
-    _formKey.currentState.save();
-
-    AuthNotifier authNotifier =
-        Provider.of<AuthNotifier>(context, listen: false);
-
-    if (_authMode == AuthMode.Login) {
-      _login(_user, authNotifier);
-    } else {
-      _signUp(_user, authNotifier);
-    }
-  }
-
   _login(User user, AuthNotifier authNotifier) async {
     AuthResult authResult = await FirebaseAuth.instance
         .signInWithEmailAndPassword(email: user.email, password: user.password)
@@ -105,6 +87,24 @@ class _LoginState extends State<Login> {
     }
   }
 
+  _submitForm() {
+    if (!_formKey.currentState.validate()) {
+      return;
+    }
+    setState(() => _enter = !_enter);
+
+    _formKey.currentState.save();
+
+    AuthNotifier authNotifier =
+    Provider.of<AuthNotifier>(context, listen: false);
+
+    if (_authMode == AuthMode.Login) {
+      _login(_user, authNotifier);
+    } else {
+      _signUp(_user, authNotifier);
+    }
+  }
+
   _showErrorLogin(String error) {
     Widget okButton = FlatButton(
       child: Text('OK'),
@@ -145,6 +145,129 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+
+    Widget _buildDisplayNameField() {
+      return TextFormField(
+        decoration: InputDecoration(
+          labelText: 'Название заведения',
+          labelStyle: TextStyle(color: Colors.black54),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12),
+          ),
+          helperText: 'Нельзя будет изменить в дальнейшем!',
+          helperStyle: TextStyle(color: Colors.redAccent),
+        ),
+        keyboardType: TextInputType.text,
+        style: TextStyle(fontSize: 18, color: t_primary),
+        validator: (String value) {
+          if (value.isEmpty) {
+            return 'Название заведения обязательно';
+          }
+
+          if (value.length < 2 || value.length > 30) {
+            return 'Название не может быть короче 2 символов';
+          }
+
+          return null;
+        },
+        onChanged: (String value) {
+          _user.displayName = value;
+        },
+      );
+    }
+
+    Widget _buildEmailField() {
+      return TextFormField(
+        decoration: InputDecoration(
+          labelText: "Email",
+          labelStyle: TextStyle(color: Colors.black54),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12),
+          ),
+        ),
+        keyboardType: TextInputType.emailAddress,
+        style: TextStyle(fontSize: 18, color: t_primary),
+        validator: (String value) {
+          if (value.isEmpty) {
+            return 'Email обязателен';
+          }
+
+          if (!RegExp(
+              r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+              .hasMatch(value)) {
+            return 'Пожалуйста введите Email корректно';
+          }
+
+          return null;
+        },
+        onChanged: (String value) {
+          _user.email = value;
+        },
+      );
+    }
+
+    Widget _buildPasswordField() {
+      return TextFormField(
+        decoration: InputDecoration(
+          labelText: 'Пароль',
+          labelStyle: TextStyle(color: Colors.black54),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12),
+          ),
+          suffixIcon: IconButton(
+            onPressed: () {
+              setState(() => _obscure1 = !_obscure1);
+            },
+            icon: Icon(_obscure1 ? Icons.visibility : Icons.visibility_off),
+          ),
+        ),
+        style: TextStyle(fontSize: 18, color: t_primary),
+        obscureText: _obscure1,
+        controller: _passwordController,
+        validator: (String value) {
+          if (value.isEmpty) {
+            return 'Пароль обязателен';
+          }
+
+          if (value.length < 6) {
+            return 'Пароль должен быть не менее 6 символов';
+          }
+
+          return null;
+        },
+        onChanged: (String value) {
+          _user.password = value;
+        },
+      );
+    }
+
+    Widget _buildConfirmPasswordField() {
+      return TextFormField(
+        decoration: InputDecoration(
+          labelText: "Подтвердите пароль",
+          labelStyle: TextStyle(color: Colors.black54),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12),
+          ),
+          suffixIcon: IconButton(
+            onPressed: () {
+              setState(() => _obscure2 = !_obscure2);
+            },
+            icon: Icon(_obscure2 ? Icons.visibility : Icons.visibility_off),
+          ),
+        ),
+        style: TextStyle(fontSize: 18, color: t_primary),
+        obscureText: _obscure2,
+        validator: (String value) {
+          if (_passwordController.text != value) {
+            return 'Пароли не совпадают';
+          }
+
+          return null;
+        },
+      );
+    }
+
     return Scaffold(
       backgroundColor: c_secondary,
       body: Stack(
@@ -152,12 +275,12 @@ class _LoginState extends State<Login> {
           Image.asset(
             'assets/login.jpg',
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.40,
+            height: MediaQuery.of(context).size.height * 0.30,
             fit: BoxFit.cover,
           ),
           Container(
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.40,
+            height: MediaQuery.of(context).size.height * 0.30,
             alignment: Alignment.topCenter,
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -175,7 +298,7 @@ class _LoginState extends State<Login> {
             padding: const EdgeInsets.only(left: 30.0),
             child: Column(
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.15),
                 Text(
                   _authMode == AuthMode.Login ? 'Вход' : 'Регистрация',
                   style: TextStyle(
@@ -188,7 +311,7 @@ class _LoginState extends State<Login> {
           ),
           Container(
             margin:
-                EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+                EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.25),
             constraints: BoxConstraints.expand(
               height: double.infinity,
             ),
@@ -296,128 +419,6 @@ class _LoginState extends State<Login> {
               : SizedBox(),
         ],
       ),
-    );
-  }
-
-  Widget _buildDisplayNameField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: 'Название заведения',
-        labelStyle: TextStyle(color: Colors.black54),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black12),
-        ),
-        helperText: 'Нельзя будет изменить в дальнейшем!',
-        helperStyle: TextStyle(color: Colors.redAccent),
-      ),
-      keyboardType: TextInputType.text,
-      style: TextStyle(fontSize: 18, color: t_primary),
-      validator: (String value) {
-        if (value.isEmpty) {
-          return 'Название заведения обязательно';
-        }
-
-        if (value.length < 2 || value.length > 30) {
-          return 'Название не может быть короче 2 символов';
-        }
-
-        return null;
-      },
-      onChanged: (String value) {
-        _user.displayName = value;
-      },
-    );
-  }
-
-  Widget _buildEmailField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: "Email",
-        labelStyle: TextStyle(color: Colors.black54),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black12),
-        ),
-      ),
-      keyboardType: TextInputType.emailAddress,
-      style: TextStyle(fontSize: 18, color: t_primary),
-      validator: (String value) {
-        if (value.isEmpty) {
-          return 'Email обязателен';
-        }
-
-        if (!RegExp(
-                r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
-            .hasMatch(value)) {
-          return 'Пожалуйста введите Email корректно';
-        }
-
-        return null;
-      },
-      onChanged: (String value) {
-        _user.email = value;
-      },
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: 'Пароль',
-        labelStyle: TextStyle(color: Colors.black54),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black12),
-        ),
-        suffixIcon: IconButton(
-          onPressed: () {
-            setState(() => _obscure1 = !_obscure1);
-          },
-          icon: Icon(_obscure1 ? Icons.visibility : Icons.visibility_off),
-        ),
-      ),
-      style: TextStyle(fontSize: 18, color: t_primary),
-      obscureText: _obscure1,
-      controller: _passwordController,
-      validator: (String value) {
-        if (value.isEmpty) {
-          return 'Пароль обязателен';
-        }
-
-        if (value.length < 6) {
-          return 'Пароль должен быть не менее 6 символов';
-        }
-
-        return null;
-      },
-      onChanged: (String value) {
-        _user.password = value;
-      },
-    );
-  }
-
-  Widget _buildConfirmPasswordField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: "Подтвердите пароль",
-        labelStyle: TextStyle(color: Colors.black54),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black12),
-        ),
-        suffixIcon: IconButton(
-          onPressed: () {
-            setState(() => _obscure2 = !_obscure2);
-          },
-          icon: Icon(_obscure2 ? Icons.visibility : Icons.visibility_off),
-        ),
-      ),
-      style: TextStyle(fontSize: 18, color: t_primary),
-      obscureText: _obscure2,
-      validator: (String value) {
-        if (_passwordController.text != value) {
-          return 'Пароли не совпадают';
-        }
-
-        return null;
-      },
     );
   }
 }

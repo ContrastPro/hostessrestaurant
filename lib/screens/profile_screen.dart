@@ -30,6 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Item _selectedLanguage;
   List _subLanguages = [];
   Profile profile = Profile();
+  ScrollController _scrollController;
 
   @override
   void initState() {
@@ -46,6 +47,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     profile.image = profileNotifier.profileList[0].image;
     profile.subTime = profileNotifier.profileList[0].subTime;
     profile.createdAt = profileNotifier.profileList[0].createdAt;
+
+    _scrollController = ScrollController();
+    _scrollController.addListener(() => setState(() {}));
     super.initState();
   }
 
@@ -476,9 +480,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    Widget _homeScreen() {
+    Widget _setHeaderContent() {
       return Stack(
-        children: <Widget>[
+        children: [
           _setImageHigh(),
           Container(
             width: MediaQuery.of(context).size.width * 0.55,
@@ -555,115 +559,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          DraggableScrollableSheet(
-              initialChildSize: 0.55,
-              maxChildSize: 0.80,
-              minChildSize: 0.20,
-              builder: (context, scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: c_background,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30.0),
-                      topRight: Radius.circular(30.0),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 30.0, vertical: 35.0),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _setBasicOptions(),
-                          SizedBox(height: 32),
-                          _setTimeList(),
-                          SizedBox(height: 32),
-                          _setLanguage(),
-                          SizedBox(height: 32),
-                          _setGlobalSearch(),
-                          SizedBox(height: 62),
-                          Center(
-                            child: RaisedButton(
-                              onPressed: () {
-                                signOut(authNotifier);
-                                Navigator.pop(context);
-                              },
-                              color: Colors.red,
-                              textColor: Colors.white,
-                              child: const Text('Выйти из аккаунта'),
-                            ),
-                          ),
-                          SizedBox(height: 82),
-                        ]),
-                  ),
-                );
-              }),
         ],
       );
     }
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: Colors.transparent,
-            body: _homeScreen(),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
-            floatingActionButton: MediaQuery.of(context).viewInsets.bottom == 0
-                ? FloatingActionButton.extended(
-                    heroTag: UniqueKey(),
-                    backgroundColor: c_secondary,
-                    onPressed: () async {
-                      setState(() => _isUploading = !_isUploading);
-                      await _editProfile();
-                      Navigator.pop(context);
-                    },
-                    icon: Icon(Icons.save),
-                    label: Text(
-                      'СОХРАНИТЬ',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    foregroundColor: Colors.white,
-                  )
-                : SizedBox(),
+    Widget _setHomePage() {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 35.0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _setBasicOptions(),
+          SizedBox(height: 32),
+          _setTimeList(),
+          SizedBox(height: 32),
+          _setLanguage(),
+          SizedBox(height: 32),
+          _setGlobalSearch(),
+          SizedBox(height: 62),
+          ButtonBar(
+            alignment: MainAxisAlignment.center,
+            children: <Widget>[
+              RaisedButton(
+                onPressed: () {
+                  signOut(authNotifier);
+                  Navigator.pop(context);
+                },
+                color: Colors.red[900],
+                textColor: Colors.white,
+                child: const Text('Выйти из аккаунта'),
+              ),
+            ],
           ),
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RawMaterialButton(
+          SizedBox(height: 82),
+        ]),
+      );
+    }
+
+    Positioned _buildFloatingActionButton() {
+      final defaultTopMargin = MediaQuery.of(context).size.height * 0.80 - 4.0;
+      final startScale = 96.0;
+      final endScale = startScale / 2;
+
+      var top = defaultTopMargin;
+      var scale = 1.0;
+
+      if (_scrollController.hasClients) {
+        final offset = _scrollController.offset;
+        top -= offset;
+        if (offset < defaultTopMargin - startScale) {
+          scale = 1.0;
+        } else if (offset < defaultTopMargin - endScale) {
+          scale = (defaultTopMargin - endScale - offset) / endScale;
+        } else {
+          scale = 0.0;
+        }
+      }
+      return Positioned(
+        child: Transform.scale(
+          scale: scale,
+          child: FloatingActionButton(
+            onPressed: () async {
+              setState(() => _isUploading = !_isUploading);
+              await _editProfile();
+              Navigator.pop(context);
+            },
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.red,
+            child: Icon(Icons.save),
+          ),
+        ),
+        top: top,
+        right: 16.0,
+      );
+    }
+
+    return Scaffold(
+      body: Stack(
+        children: <Widget>[
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: <Widget>[
+              SliverAppBar(
+                expandedHeight: MediaQuery.of(context).size.height * 0.80,
+                floating: false,
+                pinned: true,
+                snap: false,
+                leading: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 5.0),
+                  child: RawMaterialButton(
+                    elevation: 0,
                     onPressed: () => Navigator.pop(context),
                     fillColor: c_secondary.withOpacity(0.5),
                     child: Icon(
                       Icons.arrow_back,
                       color: Colors.white,
                     ),
-                    padding: EdgeInsets.all(13.0),
                     shape: CircleBorder(),
                   ),
-                  RawMaterialButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(
-                          text: authNotifier.user.uid + "#" + profile.id));
-                    },
-                    fillColor: c_secondary.withOpacity(0.5),
-                    child: Icon(
-                      Icons.share,
-                      color: Colors.white,
+                ),
+                actions: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 5.0),
+                    child: RawMaterialButton(
+                      elevation: 0,
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(
+                            text: authNotifier.user.uid + "#" + profile.id));
+                      },
+                      fillColor: c_secondary.withOpacity(0.9),
+                      child: Icon(
+                        Icons.share,
+                        color: Colors.white,
+                      ),
+                      shape: CircleBorder(),
                     ),
-                    padding: EdgeInsets.all(13.0),
-                    shape: CircleBorder(),
                   ),
                 ],
+                backgroundColor: c_secondary,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _setHeaderContent(),
+                ),
               ),
-            ),
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    _setHomePage(),
+                  ],
+                ),
+              )
+            ],
           ),
+          _buildFloatingActionButton(),
           _isUploading == true
               ? Container(
                   width: double.infinity,

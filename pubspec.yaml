@@ -36,6 +36,7 @@ dependencies:
   auto_size_text: ^2.1.0
   path: ^1.7.0
   uuid: ^2.2.0
+  flare_flutter: ^2.0.6
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ flutter:
   assets:
     - assets/
     - assets/languages/
+    - assets/rive/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
