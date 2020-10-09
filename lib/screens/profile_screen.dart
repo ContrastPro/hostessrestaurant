@@ -229,6 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           TextFormField(
+            enabled: false,
             decoration: InputDecoration(
               labelText: 'Адрес',
               prefixIcon: Icon(Icons.restaurant),
@@ -238,20 +239,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             initialValue: profile.address,
             keyboardType: TextInputType.text,
             style: TextStyle(fontSize: 20, color: t_primary),
-            validator: (String value) {
-              if (value.isEmpty) {
-                return 'Адрес обязательно!';
-              }
-
-              if (value.length < 10) {
-                return 'Слишком короткий Адрес';
-              }
-
-              return null;
-            },
-            onChanged: (String value) {
-              profile.address = value;
-            },
           ),
           TextFormField(
             decoration: InputDecoration(
@@ -262,6 +249,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             maxLines: 1,
             initialValue: profile.phone,
             keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(' '),
+              FilteringTextInputFormatter.allow(RegExp('[+0-9]'))
+            ],
             style: TextStyle(fontSize: 20, color: t_primary),
             onChanged: (String value) {
               profile.phone = value;
@@ -662,8 +653,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: RawMaterialButton(
                       elevation: 0,
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(
-                            text: authNotifier.user.uid + "#" + profile.id));
+                        Clipboard.setData(
+                          ClipboardData(
+                              text: "${authNotifier.user.uid}#${profile.id}"),
+                        );
                       },
                       fillColor: c_secondary.withOpacity(0.9),
                       child: Icon(

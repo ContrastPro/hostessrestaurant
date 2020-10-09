@@ -8,8 +8,6 @@ import 'package:hostessrestaurant/api/food_api.dart';
 import 'package:hostessrestaurant/api/profile_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
 import 'package:hostessrestaurant/models/categories.dart';
-import 'package:hostessrestaurant/models/languages.dart';
-import 'package:hostessrestaurant/models/profile.dart';
 import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 import 'package:hostessrestaurant/notifier/food_notifier.dart';
@@ -17,18 +15,14 @@ import 'package:hostessrestaurant/notifier/profile_notifier.dart';
 import 'package:hostessrestaurant/screens/food_form_screen.dart';
 import 'package:hostessrestaurant/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  Item _selectedLanguage;
-  TextEditingController _categoryController;
-  TextEditingController _addressController;
-  ScrollController _scrollController;
-
+class _HomeScreenState extends State<HomeScreen> {
   String _uid;
   String _addressId;
   String _category;
@@ -36,16 +30,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   int _addressIndex = 0;
   bool _isUploading = false;
-  List _subLanguages = [];
+
+  TextEditingController _categoryController = TextEditingController();
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     AuthNotifier authNotifier =
         Provider.of<AuthNotifier>(context, listen: false);
     setState(() => _uid = authNotifier.user.uid);
-    _categoryController = TextEditingController();
-    _addressController = TextEditingController();
-    _scrollController = ScrollController();
     _scrollController.addListener(() => setState(() {}));
     super.initState();
   }
@@ -102,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             setState(() {
                               _language = profileNotifier
                                   .profileList[0].subLanguages[index];
+                              _selectedIndex = 0;
                             });
                             getCategories(categoriesNotifier, _uid, _addressId,
                                 _language);
@@ -228,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           });
     }
 
-    _onPageChange(DocumentSnapshot document, int index) async {
+    _onPageChange(DocumentSnapshot document) async {
       await getProfile(profileNotifier, _uid, document.data['id']);
       setState(() {
         _addressId = document.data['id'];
@@ -405,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
 
-    Widget _itemAddAddress() {
+    Widget _itemFeedback() {
       return Card(
         elevation: 10,
         semanticContainer: true,
@@ -418,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Новый адрес',
+              'Обратная связь',
               style: TextStyle(
                 color: t_primary,
                 fontSize: 20.0,
@@ -426,13 +420,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
             SizedBox(height: 5),
-            Icon(Icons.place, color: Colors.deepOrange[900]),
+            Icon(Icons.question_answer, color: Colors.deepOrange[900]),
           ],
         ),
       );
     }
 
-    Widget _headerAddresses(DocumentSnapshot document, int index) {
+    Widget _headerAddresses(DocumentSnapshot document) {
       return Card(
         elevation: 10,
         semanticContainer: true,
@@ -541,24 +535,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         keepPage: true,
                         viewportFraction: 0.8),
                     onPageChanged: (int i) {
-                      setState(() => _addressIndex = i);
+                      setState(() {
+                        _addressIndex = i;
+                        _selectedIndex = 0;
+                      });
                       if (i != 0) {
-                        _onPageChange(snapshot.data.documents[i - 1], i - 1);
+                        _onPageChange(snapshot.data.documents[i - 1]);
                       }
                     },
                     itemBuilder: (context, index) {
                       Widget result;
                       if (index == 0) {
-                        result = _itemAddAddress();
+                        result = _itemFeedback();
                       } else {
-                        if (_addressIndex == 0) {
-                          result = _headerAddresses(
-                              snapshot.data.documents[_addressIndex], index);
-                        } else {
-                          result = _headerAddresses(
-                              snapshot.data.documents[_addressIndex - 1],
-                              index);
-                        }
+                        result = _headerAddresses(
+                            snapshot.data.documents[index - 1]);
                       }
                       return Transform.scale(
                         scale: index == _addressIndex ? 1 : 0.9,
@@ -576,94 +567,94 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
 
+    final Uri _emailLaunchUri = Uri(
+        scheme: 'mailto',
+        path: 'hostessqr@gmail.com',
+        queryParameters: {'subject': "ID заведения: ${authNotifier.user.uid}"});
+
+    _sendEmail() async {
+      if (await canLaunch(_emailLaunchUri.toString())) {
+        await launch(_emailLaunchUri.toString());
+      } else {
+        throw 'Could not launch';
+      }
+    }
+
+    _openSite() async {
+      String url = 'https://www.hostessqr.site';
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch';
+      }
+    }
+
     Widget _setHomePage() {
       return Container(
         child: _addressIndex == 0
             ? Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10.0,
+                  horizontal: 25.0,
                   vertical: 50.0,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    ExpansionTile(
-                      title: Text(
-                        "Шаг 1:",
-                        style: TextStyle(
-                            fontSize: 18.0, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        "Выберите основной язык меню",
-                        style: TextStyle(
-                            fontSize: 16.0, fontWeight: FontWeight.normal),
-                      ),
-                      childrenPadding: EdgeInsets.symmetric(
-                          horizontal: 18.0, vertical: 10.0),
-                      children: <Widget>[
-                        DropdownButton<Item>(
-                          isExpanded: true,
-                          hint: Text(
-                            "Основной язык",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          value: _selectedLanguage,
-                          onChanged: (Item value) {
-                            _subLanguages.clear();
-                            setState(() {
-                              _selectedLanguage = value;
-                              _subLanguages.add(_selectedLanguage.language);
-                            });
-                          },
-                          items: languages.map((Item lang) {
-                            return DropdownMenuItem<Item>(
-                              value: lang,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundImage: AssetImage(
-                                        'assets/languages/${lang.icon}'),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    lang.title,
-                                    style: TextStyle(color: t_primary),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
+                    Text(
+                      "Вы можете связаться с нами в любое удобное для вас время, просто выбрав нужный пункт:",
+                      style: TextStyle(
+                          fontSize: 18.0, fontWeight: FontWeight.w500),
                     ),
-                    ExpansionTile(
-                      title: Text(
-                        "Шаг 2:",
-                        style: TextStyle(
-                            fontSize: 18.0, fontWeight: FontWeight.bold),
+                    SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: () => _sendEmail(),
+                      child: Row(
+                        children: [
+                          Icon(Icons.email, color: Colors.deepOrange[900]),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "hostessqr@gmail.com",
+                              style: TextStyle(
+                                color: t_primary,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      subtitle: Text(
-                        "Введите новый адрес заведения",
-                        style: TextStyle(
-                            fontSize: 16.0, fontWeight: FontWeight.normal),
+                    ),
+                    SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () => _openSite(),
+                      child: Row(
+                        children: [
+                          Icon(Icons.link, color: Colors.deepOrange[900]),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "www.hostessqr.site",
+                              style: TextStyle(
+                                color: t_primary,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      childrenPadding: EdgeInsets.symmetric(
-                          horizontal: 18.0, vertical: 10.0),
-                      children: <Widget>[
-                        TextFormField(
-                          decoration: InputDecoration(labelText: 'Новый адрес'),
-                          maxLength: 50,
-                          maxLines: 1,
-                          keyboardType: TextInputType.text,
-                          style: TextStyle(fontSize: 18, color: t_primary),
-                          onChanged: (String value) {
-                            _addressController.text = value;
-                          },
-                        ),
-                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                      width: 180,
+                      height: 180,
+                      child: FlareActor(
+                        "assets/rive/fast_note.flr",
+                        alignment: Alignment.center,
+                        fit: BoxFit.contain,
+                        animation: "note_page",
+                      ),
                     ),
                   ],
                 ),
@@ -738,7 +729,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ],
-                        )
+                        ),
                 ],
               ),
       );
@@ -767,26 +758,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Transform.scale(
           scale: scale,
           child: FloatingActionButton(
-            onPressed: () async {
-              if (_addressIndex == 0) {
-                if (_addressController.text.trim().length > 3 &&
-                    _selectedLanguage != null) {
-                  setState(() => _isUploading = !_isUploading);
-                  Profile profile = Profile();
-                  await addAddress(
-                    profile,
-                    authNotifier.user.uid,
-                    authNotifier.user.displayName,
-                    _addressController.text.trim(),
-                    _subLanguages,
-                  );
-                  _addressController.clear();
-                  setState(() => _isUploading = !_isUploading);
-                }
-              } else {
-                _showCreateDialog();
-              }
-            },
+            onPressed: () => _showCreateDialog(),
             backgroundColor: Colors.white,
             foregroundColor: Colors.red,
             child: Icon(_addressIndex == 0 ? Icons.check : Icons.add),
@@ -844,7 +816,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               )
             ],
           ),
-          _buildFloatingActionButton(),
+          _addressIndex != 0 ? _buildFloatingActionButton() : SizedBox(),
           _isUploading == true
               ? Container(
                   width: double.infinity,

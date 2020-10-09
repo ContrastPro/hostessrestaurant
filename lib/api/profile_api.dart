@@ -24,36 +24,6 @@ getProfile(
   profileNotifier.profileList = _profileList;
 }
 
-addAddress(Profile profile, String uid, String title, String address,
-    List subLanguages) async {
-  CollectionReference newAddress = Firestore.instance.collection(uid);
-
-  profile.title = title;
-  profile.address = address;
-  profile.phone = "";
-  profile.globalSearch = false;
-  profile.subTime = [
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-    "00:00 - 24:00",
-  ];
-
-  profile.subLanguages.addAll(subLanguages);
-  profile.createdAt = Timestamp.now();
-
-  DocumentReference documentRef = await newAddress.add(profile.toMap());
-
-  profile.id = documentRef.documentID;
-
-  print('uploaded profile successfully: ${profile.id}');
-
-  await documentRef.setData(profile.toMap());
-}
-
 editAddress(Profile profile, String uid, bool imageExist, File imageFile) async {
   CollectionReference foodRef = Firestore.instance.collection(uid);
 

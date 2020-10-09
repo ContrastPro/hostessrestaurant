@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hostessrestaurant/api/food_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
@@ -50,7 +51,8 @@ class _FoodFormState extends State<FoodForm> {
   File _imageFileHigh, _imageFileLow;
   List _subPrice = [];
   Food _currentFood;
-  TextEditingController _subPriceController = TextEditingController();
+  TextEditingController _subPortionController;
+  TextEditingController _subPriceController;
   ScrollController _scrollController;
 
   @override
@@ -68,6 +70,8 @@ class _FoodFormState extends State<FoodForm> {
       _currentFood = Food();
     }
 
+    _subPortionController = TextEditingController();
+    _subPriceController = TextEditingController();
     _scrollController = ScrollController();
     _scrollController.addListener(() => setState(() {}));
   }
@@ -160,11 +164,12 @@ class _FoodFormState extends State<FoodForm> {
     Navigator.pop(context);
   }
 
-  _addSubPrice(String text) {
-    if (text.isNotEmpty) {
+  _addSubPrice(String portion, String price) {
+    if (portion.isNotEmpty && price.isNotEmpty) {
       setState(() {
-        _subPrice.add(text);
+        _subPrice.add("$portion#$price");
       });
+      _subPortionController.clear();
       _subPriceController.clear();
     }
   }
@@ -174,6 +179,9 @@ class _FoodFormState extends State<FoodForm> {
 
     if (_currentFood.subPrice.isNotEmpty) {
       if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null || _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
         setState(() => _isUploading = !_isUploading);
         addFood(_currentFood, uid, address, language, category, _imageFileHigh,
             _imageFileLow, _onFoodUploaded);
@@ -192,6 +200,9 @@ class _FoodFormState extends State<FoodForm> {
     if (_currentFood.subPrice.isNotEmpty) {
       _currentFood.imageHigh != null ? imageExist = true : imageExist = false;
       if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null || _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
         setState(() => _isUploading = !_isUploading);
         editFood(_currentFood, uid, address, language, category, imageExist,
             _imageFileHigh, _imageFileLow, _onFoodUploaded);
@@ -384,12 +395,6 @@ class _FoodFormState extends State<FoodForm> {
         initialValue: _currentFood.description,
         keyboardType: TextInputType.text,
         style: TextStyle(fontSize: 20, color: t_primary),
-        validator: (String value) {
-          if (value.isEmpty) {
-            _currentFood.description = _currentFood.title;
-          }
-          return null;
-        },
         onChanged: (String value) {
           _currentFood.description = value;
         },
@@ -397,20 +402,42 @@ class _FoodFormState extends State<FoodForm> {
     }
 
     Widget _buildPriceField() {
-      return Expanded(
-        child: Padding(
-          padding: const EdgeInsets.only(right: 20),
-          child: TextField(
-            controller: _subPriceController,
-            keyboardType: TextInputType.text,
-            maxLength: 30,
-            decoration: InputDecoration(
-              labelText: 'Порция/Цена',
-              prefixIcon: Icon(Icons.attach_money),
+      return Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _subPortionController,
+              keyboardType: TextInputType.text,
+              decoration: InputDecoration(
+                labelText: 'Порция',
+                helperText: 'Пример: 170/50g или 250ml',
+              ),
+              style: TextStyle(fontSize: 20),
             ),
-            style: TextStyle(fontSize: 20),
           ),
-        ),
+          SizedBox(width: 5),
+          Expanded(
+            child: TextField(
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp('[0-9]'))
+              ],
+              controller: _subPriceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Цена',
+                helperText: 'Пример: 125 или 60',
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    _addSubPrice(
+                        _subPortionController.text, _subPriceController.text);
+                  },
+                  icon: Icon(Icons.add, color: c_primary),
+                ),
+              ),
+              style: TextStyle(fontSize: 20),
+            ),
+          ),
+        ],
       );
     }
 
@@ -423,25 +450,26 @@ class _FoodFormState extends State<FoodForm> {
             margin: const EdgeInsets.symmetric(vertical: 1.0),
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: Chip(
-              backgroundColor: c_primary.withOpacity(0.2),
+              backgroundColor: Colors.deepOrange[900],
               elevation: 0,
               label: Text(
                 price,
                 style: TextStyle(
                   fontSize: 16,
-                  color: t_primary,
+                  color: Colors.white,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               deleteIcon: Icon(
                 Icons.cancel,
-                color: Colors.red[900],
+                color: Colors.white,
               ),
               onDeleted: () {
                 setState(() {
                   _subPrice.remove(price);
                 });
-                _subPriceController.clear();
+                /*_subPortionController.clear();
+                _subPriceController.clear();*/
               },
             ),
           ),
@@ -491,26 +519,25 @@ class _FoodFormState extends State<FoodForm> {
           ),
           SizedBox(height: 30),
           _showImageLow(),
-          SizedBox(height: 10),
+          SizedBox(height: 16),
           _buildNameField(),
+          SizedBox(height: 16),
           _buildCategoryField(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              _buildPriceField(),
-              FloatingActionButton(
-                heroTag: UniqueKey(),
-                backgroundColor: c_primary,
-                elevation: 0,
-                highlightElevation: 0,
-                mini: true,
-                onPressed: () => _addSubPrice(_subPriceController.text),
-                child: Icon(Icons.add),
-                foregroundColor: Colors.white,
-              ),
-            ],
-          ),
+          SizedBox(height: 16),
+          _buildPriceField(),
+          SizedBox(height: 20),
+          _subPrice.isNotEmpty
+              ? Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    "Важно! Знак \"#\" добавляеться автоматически. Это нормально",
+                    style: TextStyle(
+                      color: t_primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                )
+              : SizedBox(),
           SizedBox(height: 20),
           Align(
             alignment: Alignment.centerLeft,
@@ -558,6 +585,7 @@ class _FoodFormState extends State<FoodForm> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: <Widget>[
           CustomScrollView(
@@ -607,6 +635,7 @@ class _FoodFormState extends State<FoodForm> {
                 delegate: SliverChildListDelegate(
                   <Widget>[
                     _setHomePage(),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.25),
                   ],
                 ),
               )
