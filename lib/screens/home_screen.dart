@@ -667,7 +667,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 80,
                           margin: EdgeInsets.only(top: 30),
                           child: ListView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              padding: EdgeInsets.symmetric(horizontal: 24),
                               scrollDirection: Axis.horizontal,
                               itemCount:
                                   categoriesNotifier.categoriesList.length,

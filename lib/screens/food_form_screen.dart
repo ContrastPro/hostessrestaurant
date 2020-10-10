@@ -448,7 +448,7 @@ class _FoodFormState extends State<FoodForm> {
         choices.add(
           Container(
             margin: const EdgeInsets.symmetric(vertical: 1.0),
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 5.0),
             child: Chip(
               backgroundColor: Colors.deepOrange[900],
               elevation: 0,
@@ -468,8 +468,6 @@ class _FoodFormState extends State<FoodForm> {
                 setState(() {
                   _subPrice.remove(price);
                 });
-                /*_subPortionController.clear();
-                _subPriceController.clear();*/
               },
             ),
           ),
