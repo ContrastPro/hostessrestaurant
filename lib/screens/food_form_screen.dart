@@ -8,44 +8,34 @@ import 'package:hostessrestaurant/api/food_api.dart';
 import 'package:hostessrestaurant/global/colors.dart';
 import 'package:hostessrestaurant/models/food.dart';
 import 'package:hostessrestaurant/notifier/food_notifier.dart';
+import 'package:hostessrestaurant/screens/images_gallery.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class FoodForm extends StatefulWidget {
   final bool isUpdating;
+  final int menuIndex;
   final String uid;
   final String address;
   final String language;
   final String category;
 
   FoodForm(
-      {this.isUpdating, this.uid, this.address, this.language, this.category});
+      {Key key,
+      @required this.isUpdating,
+      this.menuIndex,
+      this.uid,
+      this.address,
+      this.language,
+      this.category})
+      : super(key: key);
 
   @override
-  _FoodFormState createState() => _FoodFormState(
-      isUpdating: isUpdating,
-      uid: uid,
-      address: address,
-      language: language,
-      category: category);
+  _FoodFormState createState() => _FoodFormState();
 }
 
 class _FoodFormState extends State<FoodForm> {
-  _FoodFormState({
-    this.isUpdating,
-    this.uid,
-    this.address,
-    this.language,
-    this.category,
-  });
-
-  final bool isUpdating;
-  final String uid;
-  final String address;
-  final String language;
-  final String category;
-
   bool _isUploading = false;
   String _imageUrlHigh, _imageUrlLow;
   File _imageFileHigh, _imageFileLow;
@@ -61,7 +51,7 @@ class _FoodFormState extends State<FoodForm> {
     FoodNotifier foodNotifier =
         Provider.of<FoodNotifier>(context, listen: false);
 
-    if (isUpdating == true) {
+    if (widget.isUpdating == true) {
       _currentFood = foodNotifier.currentFood;
       _imageUrlHigh = _currentFood.imageHigh;
       _imageUrlLow = _currentFood.imageLow;
@@ -76,7 +66,100 @@ class _FoodFormState extends State<FoodForm> {
     _scrollController.addListener(() => setState(() {}));
   }
 
-  Future<void> _getLocalImage() async {
+  _addMainMenuFood() async {
+    _currentFood.subPrice = _subPrice;
+
+    if (_currentFood.subPrice.isNotEmpty) {
+      if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null ||
+            _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
+        setState(() => _isUploading = !_isUploading);
+        await addMainMenuFood(_currentFood, widget.uid, widget.address,
+            widget.language, widget.category, _imageFileHigh, _imageFileLow);
+        Navigator.pop(context);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
+    } else {
+      _showAlertDialog('Похоже вы забыли указать цену');
+    }
+  }
+
+  _editMainMenuFood() async {
+    _currentFood.subPrice = _subPrice;
+
+    bool imageExist;
+    if (_currentFood.subPrice.isNotEmpty) {
+      _currentFood.imageHigh != null ? imageExist = true : imageExist = false;
+      if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null ||
+            _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
+        setState(() => _isUploading = !_isUploading);
+        await editMainMenuFood(
+            _currentFood,
+            widget.uid,
+            widget.address,
+            widget.language,
+            widget.category,
+            imageExist,
+            _imageFileHigh,
+            _imageFileLow);
+        Navigator.pop(context);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
+    } else {
+      _showAlertDialog('Похоже вы забыли указать цену');
+    }
+  }
+
+  _addFood() async {
+    _currentFood.subPrice = _subPrice;
+
+    if (_currentFood.subPrice.isNotEmpty) {
+      if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null ||
+            _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
+        setState(() => _isUploading = !_isUploading);
+        await addFood(_currentFood, widget.uid, widget.address, widget.language,
+            widget.category, _imageUrlHigh, _imageUrlLow);
+        Navigator.pop(context);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
+    } else {
+      _showAlertDialog('Похоже вы забыли указать цену');
+    }
+  }
+
+  _editFood() async {
+    _currentFood.subPrice = _subPrice;
+
+    if (_currentFood.subPrice.isNotEmpty) {
+      if (_currentFood.title.isNotEmpty) {
+        if (_currentFood.description == null ||
+            _currentFood.description.isEmpty) {
+          _currentFood.description = _currentFood.title;
+        }
+        setState(() => _isUploading = !_isUploading);
+        await editFood(_currentFood, widget.uid, widget.address,
+            widget.language, widget.category, _imageUrlHigh, _imageUrlLow);
+        Navigator.pop(context);
+      } else {
+        _showAlertDialog('Похоже вы забыли добавить навание блюда');
+      }
+    } else {
+      _showAlertDialog('Похоже вы забыли указать цену');
+    }
+  }
+
+  _getLocalImage() async {
     final picker = ImagePicker();
 
     ///Get Image
@@ -112,6 +195,25 @@ class _FoodFormState extends State<FoodForm> {
     });
   }
 
+  _getLinkImage() async {
+    final imagesHighLowUrl = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImagesGallery(
+          uid: widget.uid,
+          address: widget.address,
+        ),
+      ),
+    );
+    if (imagesHighLowUrl != null && imagesHighLowUrl != "null#null") {
+      List<String> splitRes = imagesHighLowUrl.split('#');
+      setState(() {
+        _imageUrlHigh = splitRes[0];
+        _imageUrlLow = splitRes[1];
+      });
+    }
+  }
+
   _showAlertDialog(String text) {
     Widget okButton = FlatButton(
       child: Text("OK"),
@@ -133,11 +235,17 @@ class _FoodFormState extends State<FoodForm> {
   _showDeleteDialog() {
     Widget okButton = FlatButton(
         child: Text("Да"),
-        onPressed: () {
+        onPressed: () async {
           setState(() => _isUploading = !_isUploading);
-          deleteFood(
-              _currentFood, uid, address, language, category, _onFoodDeleted);
           Navigator.of(context).pop();
+          if (widget.menuIndex == 0) {
+            await deleteMainMenuFood(_currentFood, widget.uid, widget.address,
+                widget.language, widget.category);
+          } else {
+            await deleteFood(_currentFood, widget.uid, widget.address,
+                widget.language, widget.category);
+          }
+          Navigator.pop(context);
         });
     Widget cancelButton = FlatButton(
       child: Text("Нет"),
@@ -156,14 +264,6 @@ class _FoodFormState extends State<FoodForm> {
     );
   }
 
-  _onFoodUploaded(Food food) {
-    Navigator.pop(context);
-  }
-
-  _onFoodDeleted(Food food) {
-    Navigator.pop(context);
-  }
-
   _addSubPrice(String portion, String price) {
     if (portion.isNotEmpty && price.isNotEmpty) {
       setState(() {
@@ -174,145 +274,122 @@ class _FoodFormState extends State<FoodForm> {
     }
   }
 
-  _addFood() {
-    _currentFood.subPrice = _subPrice;
-
-    if (_currentFood.subPrice.isNotEmpty) {
-      if (_currentFood.title.isNotEmpty) {
-        if (_currentFood.description == null || _currentFood.description.isEmpty) {
-          _currentFood.description = _currentFood.title;
-        }
-        setState(() => _isUploading = !_isUploading);
-        addFood(_currentFood, uid, address, language, category, _imageFileHigh,
-            _imageFileLow, _onFoodUploaded);
-      } else {
-        _showAlertDialog('Похоже вы забыли добавить навание блюда');
-      }
-    } else {
-      _showAlertDialog('Похоже вы забыли указать цену');
-    }
-  }
-
-  _editFood() {
-    _currentFood.subPrice = _subPrice;
-
-    bool imageExist;
-    if (_currentFood.subPrice.isNotEmpty) {
-      _currentFood.imageHigh != null ? imageExist = true : imageExist = false;
-      if (_currentFood.title.isNotEmpty) {
-        if (_currentFood.description == null || _currentFood.description.isEmpty) {
-          _currentFood.description = _currentFood.title;
-        }
-        setState(() => _isUploading = !_isUploading);
-        editFood(_currentFood, uid, address, language, category, imageExist,
-            _imageFileHigh, _imageFileLow, _onFoodUploaded);
-      } else {
-        _showAlertDialog('Похоже вы забыли добавить навание блюда');
-      }
-    } else {
-      _showAlertDialog('Похоже вы забыли указать цену');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     _showImageLow() {
-      if (_imageFileLow == null && _imageUrlLow == null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(15.0),
-          child: Stack(
-            children: [
-              Image.asset(
-                'assets/placeholder_200.png',
-                fit: BoxFit.cover,
-                width: 100,
-                height: 100,
-              ),
-              Container(
-                width: 100,
-                height: 100,
-                child: FlatButton(
-                  padding: EdgeInsets.all(16),
-                  color: Colors.black26,
-                  child: Icon(
-                    Icons.camera_enhance,
-                    size: 40,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => _getLocalImage(),
-                ),
-              )
-            ],
-          ),
-        );
-      } else if (_imageFileLow != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(15.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: <Widget>[
-              Image.file(
-                _imageFileLow,
-                fit: BoxFit.cover,
-                width: 100,
-                height: 100,
-              ),
-              Container(
-                width: 100,
-                height: 100,
-                child: FlatButton(
-                  padding: EdgeInsets.all(16),
-                  color: Colors.black26,
-                  child: Icon(
-                    Icons.camera_enhance,
-                    size: 40,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => _getLocalImage(),
-                ),
-              )
-            ],
-          ),
-        );
-      } else if (_imageUrlLow != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(15.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: <Widget>[
-              Container(
-                width: 100,
-                height: 100,
-                child: CachedNetworkImage(
-                  imageUrl: _imageUrlLow,
+      if (widget.menuIndex == 0) {
+        if (_imageFileLow == null && _imageUrlLow == null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(15.0),
+            child: Stack(
+              children: [
+                Image.asset(
+                  'assets/placeholder_200.png',
                   fit: BoxFit.cover,
-                  progressIndicatorBuilder: (context, url, downloadProgress) {
-                    return Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: CircularProgressIndicator(
-                        value: downloadProgress.progress,
-                      ),
-                    );
-                  },
-                  errorWidget: (context, url, error) => Icon(Icons.error),
+                  width: 100,
+                  height: 100,
                 ),
-              ),
-              Container(
-                width: 100,
-                height: 100,
-                child: FlatButton(
-                  padding: EdgeInsets.all(16),
-                  color: Colors.black26,
-                  child: Icon(
-                    Icons.camera_enhance,
-                    size: 40,
-                    color: Colors.white,
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: FlatButton(
+                    padding: EdgeInsets.all(16),
+                    color: Colors.black26,
+                    child: Icon(
+                      Icons.camera_enhance,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => _getLocalImage(),
                   ),
-                  onPressed: () => _getLocalImage(),
+                )
+              ],
+            ),
+          );
+        } else if (_imageFileLow != null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(15.0),
+            child: Stack(
+              alignment: AlignmentDirectional.bottomCenter,
+              children: <Widget>[
+                Image.file(
+                  _imageFileLow,
+                  fit: BoxFit.cover,
+                  width: 100,
+                  height: 100,
                 ),
-              )
-            ],
-          ),
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: FlatButton(
+                    padding: EdgeInsets.all(16),
+                    color: Colors.black26,
+                    child: Icon(
+                      Icons.camera_enhance,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => _getLocalImage(),
+                  ),
+                )
+              ],
+            ),
+          );
+        } else if (_imageUrlLow != null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(15.0),
+            child: Stack(
+              alignment: AlignmentDirectional.bottomCenter,
+              children: <Widget>[
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: CachedNetworkImage(
+                    imageUrl: _imageUrlLow,
+                    fit: BoxFit.cover,
+                    progressIndicatorBuilder: (context, url, downloadProgress) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: CircularProgressIndicator(
+                          value: downloadProgress.progress,
+                        ),
+                      );
+                    },
+                    errorWidget: (context, url, error) => Image.asset(
+                      'assets/placeholder_200.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: FlatButton(
+                    padding: EdgeInsets.all(16),
+                    color: Colors.black26,
+                    child: Icon(
+                      Icons.camera_enhance,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => _getLocalImage(),
+                  ),
+                )
+              ],
+            ),
+          );
+        }
+      } else {
+        return FlatButton.icon(
+          icon: Icon(Icons.link),
+          label: Text(widget.isUpdating != true
+              ? "Загрузить существующее"
+              : "Изменить изображение"),
+          color: c_secondary,
+          textColor: Colors.white,
+          onPressed: () {
+            _getLinkImage();
+          },
         );
       }
     }
@@ -348,7 +425,10 @@ class _FoodFormState extends State<FoodForm> {
                 ),
               );
             },
-            errorWidget: (context, url, error) => Icon(Icons.error),
+            errorWidget: (context, url, error) => Image.asset(
+              'assets/placeholder_1024.png',
+              fit: BoxFit.cover,
+            ),
           ),
         );
       }
@@ -450,7 +530,7 @@ class _FoodFormState extends State<FoodForm> {
             margin: const EdgeInsets.symmetric(vertical: 1.0),
             padding: const EdgeInsets.symmetric(horizontal: 5.0),
             child: Chip(
-              backgroundColor: Colors.deepOrange[900],
+              backgroundColor: c_accent,
               elevation: 0,
               label: Text(
                 price,
@@ -507,7 +587,9 @@ class _FoodFormState extends State<FoodForm> {
           Align(
             alignment: Alignment.topLeft,
             child: Text(
-              isUpdating != true ? "Добавить блюдо" : "Редактировать блюдо",
+              widget.isUpdating != true
+                  ? "Добавить блюдо"
+                  : "Редактировать блюдо",
               style: TextStyle(
                 color: t_primary,
                 fontSize: 25.0,
@@ -570,10 +652,16 @@ class _FoodFormState extends State<FoodForm> {
           scale: scale,
           child: FloatingActionButton(
             onPressed: () {
-              isUpdating != true ? _addFood() : _editFood();
+              if (widget.menuIndex == 0) {
+                widget.isUpdating != true
+                    ? _addMainMenuFood()
+                    : _editMainMenuFood();
+              } else {
+                widget.isUpdating != true ? _addFood() : _editFood();
+              }
             },
             backgroundColor: Colors.white,
-            foregroundColor: Colors.red,
+            foregroundColor: c_accent,
             child: Icon(Icons.save),
           ),
         ),
@@ -608,13 +696,13 @@ class _FoodFormState extends State<FoodForm> {
                   ),
                 ),
                 actions: [
-                  isUpdating == true
+                  widget.isUpdating == true
                       ? Padding(
                           padding: EdgeInsets.symmetric(vertical: 5.0),
                           child: RawMaterialButton(
                             elevation: 0,
                             onPressed: () => _showDeleteDialog(),
-                            fillColor: Colors.red[900],
+                            fillColor: c_accent,
                             child: Icon(
                               Icons.delete_forever,
                               color: Colors.white,

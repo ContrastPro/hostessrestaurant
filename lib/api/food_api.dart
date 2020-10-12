@@ -27,8 +27,8 @@ getFoods(FoodNotifier foodNotifier, String uid, String address, String language,
   foodNotifier.foodList = _foodList;
 }
 
-addFood(Food food, String uid, String address, String language, String category,
-    File fileHigh, File fileLow, Function foodUploaded) async {
+addMainMenuFood(Food food, String uid, String address, String language,
+    String category, File fileHigh, File fileLow) async {
   if (fileHigh != null) {
     var uuid = Uuid().v4();
 
@@ -69,23 +69,15 @@ addFood(Food food, String uid, String address, String language, String category,
     print('uploaded image successfully: $_urlHigh\n$_urlLow');
 
     ///
-    _addFood(food, uid, address, language, category, _urlHigh, _urlLow,
-        foodUploaded);
+    _addMainMenuFood(food, uid, address, language, category, _urlHigh, _urlLow);
   } else {
     /// Uploading Food without Image
-    _addFood(food, uid, address, language, category, null, null, foodUploaded);
+    _addMainMenuFood(food, uid, address, language, category, null, null);
   }
 }
 
-_addFood(
-    Food food,
-    String uid,
-    String address,
-    String language,
-    String category,
-    String imageUrlHigh,
-    String imageUrlLow,
-    Function foodUploaded) async {
+_addMainMenuFood(Food food, String uid, String address, String language,
+    String category, String imageUrlHigh, String imageUrlLow) async {
   CollectionReference foodRef = Firestore.instance
       .collection(uid)
       .document(address)
@@ -107,20 +99,10 @@ _addFood(
   print('uploaded food successfully: ${food.id}');
 
   await documentRef.setData(food.toMap(), merge: true);
-
-  foodUploaded(food);
 }
 
-editFood(
-    Food food,
-    String uid,
-    String address,
-    String language,
-    String category,
-    bool imageExist,
-    File fileHigh,
-    File fileLow,
-    Function foodUploaded) async {
+editMainMenuFood(Food food, String uid, String address, String language,
+    String category, bool imageExist, File fileHigh, File fileLow) async {
   CollectionReference foodRef = Firestore.instance
       .collection(uid)
       .document(address)
@@ -187,13 +169,11 @@ editFood(
   food.updatedAt = Timestamp.now();
 
   await foodRef.document(food.id).updateData(food.toMap());
-
-  foodUploaded(food);
   print('edit food with id: ${food.id}');
 }
 
-deleteFood(Food food, String uid, String address, String language,
-    String category, Function foodDeleted) async {
+deleteMainMenuFood(Food food, String uid, String address, String language,
+    String category) async {
   if (food.imageHigh != null) {
     ///
     StorageReference storageReferenceHigh =
@@ -216,8 +196,63 @@ deleteFood(Food food, String uid, String address, String language,
       .collection(category)
       .document(food.id)
       .delete();
+  print('delete food successfully with id: ${food.id}');
+}
 
-  foodDeleted(food);
+addFood(Food food, String uid, String address, String language, String category,
+    String imageUrlHigh, String imageUrlLow) async {
+  CollectionReference foodRef = Firestore.instance
+      .collection(uid)
+      .document(address)
+      .collection(language)
+      .document('Menu')
+      .collection(category);
 
+  if (imageUrlHigh != null && imageUrlLow != null) {
+    food.imageHigh = imageUrlHigh;
+    food.imageLow = imageUrlLow;
+  } else {
+    food.imageHigh = null;
+    food.imageLow = null;
+  }
+
+  food.createdAt = Timestamp.now();
+
+  DocumentReference documentRef = await foodRef.add(food.toMap());
+
+  food.id = documentRef.documentID;
+
+  print('uploaded food successfully: ${food.id}');
+
+  await documentRef.setData(food.toMap(), merge: true);
+}
+
+editFood(Food food, String uid, String address, String language,
+    String category, String urlHigh, String urlLow) async {
+  CollectionReference foodRef = Firestore.instance
+      .collection(uid)
+      .document(address)
+      .collection(language)
+      .document('Menu')
+      .collection(category);
+
+  food.imageHigh = urlHigh;
+  food.imageLow = urlLow;
+  food.updatedAt = Timestamp.now();
+
+  await foodRef.document(food.id).updateData(food.toMap());
+  print('edit food with id: ${food.id}');
+}
+
+deleteFood(Food food, String uid, String address, String language,
+    String category) async {
+  await Firestore.instance
+      .collection(uid)
+      .document(address)
+      .collection(language)
+      .document('Menu')
+      .collection(category)
+      .document(food.id)
+      .delete();
   print('delete food successfully with id: ${food.id}');
 }

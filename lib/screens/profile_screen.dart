@@ -574,7 +574,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   signOut(authNotifier);
                   Navigator.pop(context);
                 },
-                color: Colors.red[900],
+                color: c_accent,
                 textColor: Colors.white,
                 child: const Text('Выйти из аккаунта'),
               ),
@@ -614,7 +614,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(context);
             },
             backgroundColor: Colors.white,
-            foregroundColor: Colors.red,
+            foregroundColor: c_accent,
             child: Icon(Icons.save),
           ),
         ),

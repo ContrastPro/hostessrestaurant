@@ -15,6 +15,7 @@ import 'package:hostessrestaurant/notifier/profile_notifier.dart';
 import 'package:hostessrestaurant/screens/food_form_screen.dart';
 import 'package:hostessrestaurant/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _addressId;
   String _category;
   String _language;
+  int _menuIndex = 0;
   int _selectedIndex = 0;
   int _addressIndex = 0;
   bool _isUploading = false;
@@ -96,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               _language = profileNotifier
                                   .profileList[0].subLanguages[index];
                               _selectedIndex = 0;
+                              _menuIndex = index;
                             });
                             getCategories(categoriesNotifier, _uid, _addressId,
                                 _language);
@@ -203,6 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                   builder: (context) => FoodForm(
                                     isUpdating: false,
+                                    menuIndex: _menuIndex,
                                     uid: _uid,
                                     address: _addressId,
                                     language: _language,
@@ -260,6 +264,95 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    Widget _menuItem(int index) {
+      return Row(
+        children: <Widget>[
+          Container(
+            width: 80,
+            height: 80,
+            child: Card(
+              semanticContainer: true,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: foodNotifier.foodList[index].imageLow != null
+                  ? CachedNetworkImage(
+                      imageUrl: foodNotifier.foodList[index].imageLow,
+                      fit: BoxFit.cover,
+                      progressIndicatorBuilder:
+                          (context, url, downloadProgress) => Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: CircularProgressIndicator(
+                            value: downloadProgress.progress),
+                      ),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
+                    )
+                  : Image.asset('assets/placeholder_200.png',
+                      fit: BoxFit.cover),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10.0, 2.0, 5.0, 2.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    foodNotifier.foodList[index].title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: t_primary,
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    foodNotifier.foodList[index].description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: t_secondary,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  '₴',
+                  style: TextStyle(
+                    color: t_primary,
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 2),
+                Text(
+                  _parsePrice(foodNotifier.foodList[index].subPrice[0]),
+                  style: TextStyle(
+                    color: t_primary,
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     Widget _setMenu() {
       return ListView.builder(
         padding: EdgeInsets.only(
@@ -272,126 +365,34 @@ class _HomeScreenState extends State<HomeScreen> {
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
-          return Container(
-            color: c_background,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 5.0),
-              child: Container(
-                height: 100,
-                child: InkWell(
-                  onTap: () async {
-                    foodNotifier.currentFood = foodNotifier.foodList[index];
-                    if (_selectedIndex == 0) {
-                      _setCategory(categoriesNotifier.categoriesList[0].title);
-                    }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 5.0),
+            child: Container(
+              height: 100,
+              child: InkWell(
+                onTap: () async {
+                  foodNotifier.currentFood = foodNotifier.foodList[index];
+                  if (_selectedIndex == 0) {
+                    _setCategory(categoriesNotifier.categoriesList[0].title);
+                  }
 
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FoodForm(
-                          isUpdating: true,
-                          uid: _uid,
-                          address: _addressId,
-                          language: _language,
-                          category: _category,
-                        ),
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FoodForm(
+                        isUpdating: true,
+                        menuIndex: _menuIndex,
+                        uid: _uid,
+                        address: _addressId,
+                        language: _language,
+                        category: _category,
                       ),
-                    );
-                    _refreshList(categoriesNotifier
-                        .categoriesList[_selectedIndex].title);
-                  },
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                        width: 80,
-                        height: 80,
-                        child: Card(
-                          semanticContainer: true,
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          child: foodNotifier.foodList[index].imageLow != null
-                              ? CachedNetworkImage(
-                                  imageUrl:
-                                      foodNotifier.foodList[index].imageLow,
-                                  fit: BoxFit.cover,
-                                  progressIndicatorBuilder:
-                                      (context, url, downloadProgress) =>
-                                          Padding(
-                                    padding: const EdgeInsets.all(15.0),
-                                    child: CircularProgressIndicator(
-                                        value: downloadProgress.progress),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Icon(Icons.error),
-                                )
-                              : Image.asset('assets/placeholder_200.png',
-                                  fit: BoxFit.cover),
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(10.0, 2.0, 5.0, 2.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                foodNotifier.foodList[index].title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: t_primary,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                foodNotifier.foodList[index].description,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: t_secondary,
-                                  fontSize: 14.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: <Widget>[
-                            Text(
-                              '₴',
-                              style: TextStyle(
-                                color: t_primary,
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 2),
-                            Text(
-                              _parsePrice(
-                                  foodNotifier.foodList[index].subPrice[0]),
-                              style: TextStyle(
-                                color: t_primary,
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                  _refreshList(categoriesNotifier
+                      .categoriesList[_selectedIndex].title);
+                },
+                child: _menuItem(index),
               ),
             ),
           );
@@ -420,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SizedBox(height: 5),
-            Icon(Icons.question_answer, color: Colors.deepOrange[900]),
+            Icon(Icons.question_answer, color: c_accent),
           ],
         ),
       );
@@ -512,56 +513,70 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     Widget _setHeaderContent() {
+      PageController pageController = PageController(
+          initialPage: _addressIndex, keepPage: true, viewportFraction: 0.8);
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            height: 260,
-            child: StreamBuilder(
-              stream: Firestore.instance
-                  .collection(_uid)
-                  .orderBy("createdAt", descending: false)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Something went wrong'));
-                }
+          StreamBuilder(
+            stream: Firestore.instance
+                .collection(_uid)
+                .orderBy("createdAt", descending: false)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Something went wrong'));
+              }
 
-                if (snapshot.hasData) {
-                  return PageView.builder(
-                    itemCount: snapshot.data.documents.length + 1,
-                    controller: PageController(
-                        initialPage: _addressIndex,
-                        keepPage: true,
-                        viewportFraction: 0.8),
-                    onPageChanged: (int i) {
-                      setState(() {
-                        _addressIndex = i;
-                        _selectedIndex = 0;
-                      });
-                      if (i != 0) {
-                        _onPageChange(snapshot.data.documents[i - 1]);
-                      }
-                    },
-                    itemBuilder: (context, index) {
-                      Widget result;
-                      if (index == 0) {
-                        result = _itemFeedback();
-                      } else {
-                        result = _headerAddresses(
-                            snapshot.data.documents[index - 1]);
-                      }
-                      return Transform.scale(
-                        scale: index == _addressIndex ? 1 : 0.9,
-                        child: result,
-                      );
-                    },
-                  );
-                }
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: 260,
+                      child: PageView.builder(
+                        itemCount: snapshot.data.documents.length + 1,
+                        controller: pageController,
+                        onPageChanged: (int i) {
+                          setState(() {
+                            _addressIndex = i;
+                            _selectedIndex = 0;
+                            _menuIndex = 0;
+                          });
+                          if (i != 0) {
+                            _onPageChange(snapshot.data.documents[i - 1]);
+                          }
+                        },
+                        itemBuilder: (context, index) {
+                          Widget result;
+                          if (index == 0) {
+                            result = _itemFeedback();
+                          } else {
+                            result = _headerAddresses(
+                                snapshot.data.documents[index - 1]);
+                          }
+                          return Transform.scale(
+                            scale: index == _addressIndex ? 1 : 0.9,
+                            child: result,
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    SmoothPageIndicator(
+                      controller: pageController,
+                      count: snapshot.data.documents.length + 1,
+                      effect: WormEffect(
+                          dotWidth: 12.0,
+                          dotHeight: 12.0,
+                          dotColor: Colors.white,
+                          activeDotColor: c_accent),
+                    ),
+                  ],
+                );
+              }
 
-                return Center(child: CircularProgressIndicator(strokeWidth: 6));
-              },
-            ),
+              return Center(child: CircularProgressIndicator(strokeWidth: 6));
+            },
           ),
         ],
       );
@@ -610,7 +625,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () => _sendEmail(),
                       child: Row(
                         children: [
-                          Icon(Icons.email, color: Colors.deepOrange[900]),
+                          Icon(Icons.email, color: c_accent),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -630,7 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () => _openSite(),
                       child: Row(
                         children: [
-                          Icon(Icons.link, color: Colors.deepOrange[900]),
+                          Icon(Icons.link, color: c_accent),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -760,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: FloatingActionButton(
             onPressed: () => _showCreateDialog(),
             backgroundColor: Colors.white,
-            foregroundColor: Colors.red,
+            foregroundColor: c_accent,
             child: Icon(_addressIndex == 0 ? Icons.check : Icons.add),
           ),
         ),
@@ -797,7 +812,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            backgroundColor: Colors.deepOrange[900],
+                            backgroundColor: c_accent,
                           ),
                         ),
                       )

@@ -38,6 +38,7 @@ dependencies:
   uuid: ^2.2.0
   flare_flutter: ^2.0.6
   url_launcher: ^5.7.2
+  smooth_page_indicator: ^0.2.0
 
 dev_dependencies:
   flutter_test:
