@@ -7,7 +7,8 @@ class CategoriesNotifier with ChangeNotifier {
   List<Categories> _categoriesList = [];
   Categories _currentCategories;
 
-  UnmodifiableListView<Categories> get categoriesList => UnmodifiableListView(_categoriesList);
+  UnmodifiableListView<Categories> get categoriesList =>
+      UnmodifiableListView(_categoriesList);
 
   Categories get currentCategories => _currentCategories;
 
@@ -27,7 +28,8 @@ class CategoriesNotifier with ChangeNotifier {
   }
 
   deleteCategories(Categories categories) {
-    _categoriesList.removeWhere((_categories) => _categories.id == categories.id);
+    _categoriesList
+        .removeWhere((_categories) => _categories.id == categories.id);
     notifyListeners();
   }
 }

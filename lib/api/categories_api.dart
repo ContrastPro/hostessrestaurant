@@ -45,8 +45,8 @@ addCategory(Categories categories, String uid, String address, String language,
   await documentRef.setData(categories.toMap(), merge: true);
 }
 
-deleteCategory(Categories categories, String uid, String address,
-    String language) async {
+deleteCategory(
+    Categories categories, String uid, String address, String language) async {
   await Firestore.instance
       .collection(uid)
       .document(address)

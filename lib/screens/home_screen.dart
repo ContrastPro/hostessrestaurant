@@ -389,8 +389,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   );
-                  _refreshList(categoriesNotifier
-                      .categoriesList[_selectedIndex].title);
+                  _refreshList(
+                      categoriesNotifier.categoriesList[_selectedIndex].title);
                 },
                 child: _menuItem(index),
               ),

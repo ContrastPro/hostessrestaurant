@@ -24,7 +24,8 @@ getProfile(
   profileNotifier.profileList = _profileList;
 }
 
-editAddress(Profile profile, String uid, bool imageExist, File imageFile) async {
+editAddress(
+    Profile profile, String uid, bool imageExist, File imageFile) async {
   CollectionReference foodRef = Firestore.instance.collection(uid);
 
   if (imageFile != null) {

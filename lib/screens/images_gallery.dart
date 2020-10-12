@@ -45,12 +45,12 @@ class _ImagesGalleryState extends State<ImagesGallery> {
         pressElevation: 0.0,
         onSelected: (bool value) {
           _onSelected(index);
-          setState(() =>_selectedCategory = document["title"]);
+          setState(() => _selectedCategory = document["title"]);
         },
       );
     }
 
-    Widget _setCategory (){
+    Widget _setCategory() {
       return StreamBuilder(
         stream: Firestore.instance
             .collection(widget.uid)
@@ -66,7 +66,6 @@ class _ImagesGalleryState extends State<ImagesGallery> {
           }
 
           if (snapshot.hasData) {
-
             return Container(
               color: c_background,
               child: Container(
@@ -88,8 +87,7 @@ class _ImagesGalleryState extends State<ImagesGallery> {
 
           return Padding(
             padding: const EdgeInsets.only(top: 100.0),
-            child:
-            Center(child: CircularProgressIndicator(strokeWidth: 6)),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 6)),
           );
         },
       );
@@ -102,7 +100,8 @@ class _ImagesGalleryState extends State<ImagesGallery> {
           height: 100,
           child: InkWell(
             onTap: () {
-              Navigator.pop(context, "${document['imageHigh']}#${document['imageLow']}");
+              Navigator.pop(
+                  context, "${document['imageHigh']}#${document['imageLow']}");
             },
             child: Row(
               children: <Widget>[
@@ -264,10 +263,7 @@ class _ImagesGalleryState extends State<ImagesGallery> {
         children: [
           SingleChildScrollView(
             child: Column(
-              children: [
-                SizedBox(height: 100),
-                _setMenu()
-              ],
+              children: [SizedBox(height: 100), _setMenu()],
             ),
           ),
           _setCategory(),
