@@ -520,6 +520,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           StreamBuilder(
             stream: Firestore.instance
+                .collection('Database')
+
+                /// Users or Public_Catering
+                .document('Public_Catering')
                 .collection(_uid)
                 .orderBy("createdAt", descending: false)
                 .snapshots(),
@@ -566,10 +570,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: pageController,
                       count: snapshot.data.documents.length + 1,
                       effect: WormEffect(
-                          dotWidth: 12.0,
-                          dotHeight: 12.0,
-                          dotColor: Colors.white,
-                          activeDotColor: c_accent),
+                        dotWidth: 12.0,
+                        dotHeight: 12.0,
+                        dotColor: Colors.white,
+                        activeDotColor: c_accent,
+                      ),
                     ),
                   ],
                 );

@@ -10,6 +10,10 @@ import 'package:uuid/uuid.dart';
 getProfile(
     ProfileNotifier profileNotifier, String uid, String addressId) async {
   QuerySnapshot snapshot = await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .where('id', isEqualTo: addressId)
       .getDocuments();
@@ -26,7 +30,12 @@ getProfile(
 
 editAddress(
     Profile profile, String uid, bool imageExist, File imageFile) async {
-  CollectionReference foodRef = Firestore.instance.collection(uid);
+  CollectionReference foodRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
+      .collection(uid);
 
   if (imageFile != null) {
     if (imageExist == true) {
@@ -38,7 +47,7 @@ editAddress(
     var uuid = Uuid().v4();
     var fileExtension = path.extension(imageFile.path);
     final StorageReference firebaseStorageRef =
-        FirebaseStorage.instance.ref().child('$uid/$uuid$fileExtension');
+        FirebaseStorage.instance.ref().child('Public_Catering/$uid/$uuid$fileExtension');
 
     await firebaseStorageRef
         .putFile(imageFile)
@@ -62,8 +71,10 @@ editAddress(
 }
 
 addToGlobalSearch(GlobalProfile globalProfile) async {
-  CollectionReference globalSearch =
-      Firestore.instance.collection('Global_Search');
+  CollectionReference globalSearch = Firestore.instance
+      .collection('Search')
+      .document('Global_Search')
+      .collection("All");
 
   globalProfile.createdAt = Timestamp.now();
 
@@ -73,7 +84,9 @@ addToGlobalSearch(GlobalProfile globalProfile) async {
 
 deleteFromGlobalSearch(GlobalProfile globalProfile) async {
   await Firestore.instance
-      .collection('Global_Search')
+      .collection('Search')
+      .document('Global_Search')
+      .collection("All")
       .document(globalProfile.id)
       .delete();
   print('delete from Global Search successfully with id: ${globalProfile.id}');

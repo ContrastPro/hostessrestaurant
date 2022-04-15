@@ -5,6 +5,10 @@ import 'package:hostessrestaurant/notifier/categories_notifier.dart';
 getCategories(CategoriesNotifier categoriesNotifier, String uid, String address,
     String language) async {
   QuerySnapshot snapshot = await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -26,6 +30,10 @@ getCategories(CategoriesNotifier categoriesNotifier, String uid, String address,
 addCategory(Categories categories, String uid, String address, String language,
     String category) async {
   CollectionReference categoryRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -48,6 +56,10 @@ addCategory(Categories categories, String uid, String address, String language,
 deleteCategory(
     Categories categories, String uid, String address, String language) async {
   await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)

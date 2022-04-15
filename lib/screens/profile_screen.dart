@@ -47,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     profile.image = profileNotifier.profileList[0].image;
     profile.subTime = profileNotifier.profileList[0].subTime;
     profile.createdAt = profileNotifier.profileList[0].createdAt;
+    profile.isAvailable = profileNotifier.profileList[0].isAvailable;
 
     _scrollController = ScrollController();
     _scrollController.addListener(() => setState(() {}));

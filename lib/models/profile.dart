@@ -7,6 +7,7 @@ class Profile {
   String phone;
   String image;
   bool globalSearch;
+  bool isAvailable;
   List subTime = [];
   List subLanguages = [];
   Timestamp createdAt;
@@ -21,6 +22,7 @@ class Profile {
     phone = data['phone'];
     image = data['image'];
     globalSearch = data['globalSearch'];
+    isAvailable = data['isAvailable'];
     subTime = data['subTime'];
     subLanguages = data['subLanguages'];
     createdAt = data['createdAt'];
@@ -35,6 +37,7 @@ class Profile {
       'phone': phone,
       'image': image,
       'globalSearch': globalSearch,
+      'isAvailable': isAvailable,
       'subTime': subTime,
       'subLanguages': subLanguages,
       'createdAt': createdAt,

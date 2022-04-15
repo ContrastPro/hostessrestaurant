@@ -9,13 +9,11 @@ import 'package:hostessrestaurant/models/user.dart';
 import 'package:hostessrestaurant/notifier/auth_notifier.dart';
 import 'package:provider/provider.dart';
 
-enum AuthMode { Signup, Login }
+enum AuthMode { Login }
 
 class Login extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() {
-    return _LoginState();
-  }
+  State<StatefulWidget> createState() => _LoginState();
 }
 
 class _LoginState extends State<Login> {

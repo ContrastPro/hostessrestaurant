@@ -10,6 +10,10 @@ import 'package:uuid/uuid.dart';
 getFoods(FoodNotifier foodNotifier, String uid, String address, String language,
     String category) async {
   QuerySnapshot snapshot = await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -39,11 +43,15 @@ addMainMenuFood(Food food, String uid, String address, String language,
     ///
     final StorageReference firebaseStorageRefHigh = FirebaseStorage.instance
         .ref()
-        .child('$uid/imageHigh/$uuid$fileExtensionHigh');
+
+        /// Users or Public_Catering
+        .child('Public_Catering/$uid/Image_High/$uuid$fileExtensionHigh');
 
     final StorageReference firebaseStorageRefLow = FirebaseStorage.instance
         .ref()
-        .child('$uid/imageLow/$uuid$fileExtensionLow');
+
+        /// Users or Public_Catering
+        .child('Public_Catering/$uid/Image_Low/$uuid$fileExtensionLow');
 
     ///
 
@@ -79,6 +87,10 @@ addMainMenuFood(Food food, String uid, String address, String language,
 _addMainMenuFood(Food food, String uid, String address, String language,
     String category, String imageUrlHigh, String imageUrlLow) async {
   CollectionReference foodRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -104,6 +116,10 @@ _addMainMenuFood(Food food, String uid, String address, String language,
 editMainMenuFood(Food food, String uid, String address, String language,
     String category, bool imageExist, File fileHigh, File fileLow) async {
   CollectionReference foodRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -132,11 +148,15 @@ editMainMenuFood(Food food, String uid, String address, String language,
     ///
     final StorageReference firebaseStorageRefHigh = FirebaseStorage.instance
         .ref()
-        .child('$uid/imageHigh/$uuid$fileExtensionHigh');
+
+        /// Users or Public_Catering
+        .child('Public_Catering/$uid/Image_High/$uuid$fileExtensionHigh');
 
     final StorageReference firebaseStorageRefLow = FirebaseStorage.instance
         .ref()
-        .child('$uid/imageLow/$uuid$fileExtensionLow');
+
+        /// Users or Public_Catering
+        .child('Public_Catering/$uid/Image_Low/$uuid$fileExtensionLow');
 
     ///
 
@@ -189,6 +209,10 @@ deleteMainMenuFood(Food food, String uid, String address, String language,
   }
 
   await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -202,6 +226,10 @@ deleteMainMenuFood(Food food, String uid, String address, String language,
 addFood(Food food, String uid, String address, String language, String category,
     String imageUrlHigh, String imageUrlLow) async {
   CollectionReference foodRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -230,6 +258,10 @@ addFood(Food food, String uid, String address, String language, String category,
 editFood(Food food, String uid, String address, String language,
     String category, String urlHigh, String urlLow) async {
   CollectionReference foodRef = Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)
@@ -247,6 +279,10 @@ editFood(Food food, String uid, String address, String language,
 deleteFood(Food food, String uid, String address, String language,
     String category) async {
   await Firestore.instance
+      .collection('Database')
+
+      /// Users or Public_Catering
+      .document('Public_Catering')
       .collection(uid)
       .document(address)
       .collection(language)

@@ -53,6 +53,10 @@ class _ImagesGalleryState extends State<ImagesGallery> {
     Widget _setCategory() {
       return StreamBuilder(
         stream: Firestore.instance
+            .collection('Database')
+
+            /// Users or Public_Catering
+            .document('Public_Catering')
             .collection(widget.uid)
             .document(widget.address)
             .collection(profileNotifier.profileList[0].subLanguages[0])
@@ -176,6 +180,10 @@ class _ImagesGalleryState extends State<ImagesGallery> {
       return _selectedCategory != null
           ? StreamBuilder(
               stream: Firestore.instance
+                  .collection('Database')
+
+                  /// Users or Public_Catering
+                  .document('Public_Catering')
                   .collection(widget.uid)
                   .document(widget.address)
                   .collection(profileNotifier.profileList[0].subLanguages[0])
